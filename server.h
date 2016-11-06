@@ -101,7 +101,7 @@ void handleRoot() {
   if (server.method() == HTTP_POST) {
     // TODO: CSRF checking
 
-    char *ledKeys[] = {"led1", "led2"};
+    const char *ledKeys[] = {"led1", "led2"};
     for (int i=0; i<2; i++) {
       if (server.hasArg(ledKeys[i])) {
         ledStatus[i] = !ledStatus[i];
