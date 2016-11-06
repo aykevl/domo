@@ -23,7 +23,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println(F("begin"));
 
-  WifiLed.begin(D4); // onboard LED of the ESP-12E
+  WifiLed.begin(D5); // D4 is the onboard LED of the ESP-12E
   wifiSetup();
   serverSetup();
 }
