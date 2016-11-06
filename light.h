@@ -145,9 +145,13 @@ class WakeupLight {
 
   private:
     bool inWakeup() {
-      Time now(Clock.timestamp());
-      uint32_t ts_now = now.dayTime(); // seconds in this day (including TZ)
-      uint32_t ts_wake = wakeupTime.dayTime();
-      return ts_now >= ts_wake && ts_now <= ts_wake+(wakeupDuration/1000);
+      uint64_t now = Clock.timestamp();
+      if (now == 0) {
+        // Clock is not yet initialized.
+        return false;
+      }
+      uint32_t ts_now = Time(now).dayTime(); // seconds in this day (including TZ)
+      uint32_t ts_wake = time.dayTime();
+      return ts_now >= ts_wake && ts_now <= ts_wake+(duration/1000);
     }
 };
