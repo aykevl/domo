@@ -104,18 +104,18 @@ void handleRoot() {
       }
     }
 
-    if (server.hasArg("wakeup-hour") && server.hasArg("wakeup-minute")) {
-      wakeupTime.setHour(String(server.arg("wakeup-hour")).toInt());
-      wakeupTime.setMinute(String(server.arg("wakeup-minute")).toInt());
+    if (server.hasArg(F("wakeup-hour")) && server.hasArg(F("wakeup-minute"))) {
+      wakeupTime.setHour(String(server.arg(F("wakeup-hour"))).toInt());
+      wakeupTime.setMinute(String(server.arg(F("wakeup-minute"))).toInt());
     }
-    if (server.hasArg("wakeup-duration")) {
-      int32_t duration = String(server.arg("wakeup-duration")).toInt();
+    if (server.hasArg(F("wakeup-duration"))) {
+      int32_t duration = String(server.arg(F("wakeup-duration"))).toInt();
       if (duration >= 0 && duration <= 60) {
         wakeupDuration = duration * 60000;
       }
     }
 
-    server.sendHeader("Location", "/");
+    server.sendHeader(F("Location"), F("/"));
     server.send(303, NULL);
     WifiLed.done();
     return;
@@ -182,16 +182,16 @@ void handleRoot() {
 
 void handleNotFound(){
   WifiLed.busy();
-  String message = "File Not Found\n\n";
-  message += "URI: ";
+  String message = F("File Not Found\n\n");
+  message += F("URI: ");
   message += server.uri();
-  message += "\nMethod: ";
+  message += F("\nMethod: ");
   message += (server.method() == HTTP_GET)?"GET":"POST";
-  message += "\nArguments: ";
+  message += F("\nArguments: ");
   message += server.args();
-  message += "\n";
+  message += '\n';
   for (uint8_t i=0; i<server.args(); i++){
-    message += " " + server.argName(i) + ": " + server.arg(i) + "\n";
+    message += ' ' + server.argName(i) + F(": ") + server.arg(i) + '\n';
   }
   server.send(404, "text/plain", message);
   WifiLed.done();
