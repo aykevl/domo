@@ -117,15 +117,11 @@ void handleRoot() {
       light.on();
     }
 
-    if (server.hasArg(F("wakeup-hour")) && server.hasArg(F("wakeup-minute"))) {
-      wakeupTime.setHour(String(server.arg(F("wakeup-hour"))).toInt());
-      wakeupTime.setMinute(String(server.arg(F("wakeup-minute"))).toInt());
-    }
-    if (server.hasArg(F("wakeup-duration"))) {
+    if (server.hasArg(F("wakeup-hour")) && server.hasArg(F("wakeup-minute")) && server.hasArg("wakeup-duration")) {
+      int32_t hour = String(server.arg(F("wakeup-hour"))).toInt();
+      int32_t minute = String(server.arg(F("wakeup-minute"))).toInt();
       int32_t duration = String(server.arg(F("wakeup-duration"))).toInt();
-      if (duration >= 0 && duration <= 60) {
-        wakeupDuration = duration * 60000;
-      }
+      light.setWakeup(hour, minute, duration);
     }
 
     server.sendHeader(F("Location"), F("/"));
@@ -162,9 +158,9 @@ void handleRoot() {
   Time t = Time(now);
   root.replace(F(":time________:"), t.format());
 
-  root.replace(F(":H"), wakeupTime.formatHour());
-  root.replace(F(":M"), wakeupTime.formatMinute());
-  root.replace(F(":D"), String(wakeupDuration / 60000));
+  root.replace(F(":H"), light.getTime().formatHour());
+  root.replace(F(":M"), light.getTime().formatMinute());
+  root.replace(F(":D"), String(light.getDuration() / 60000));
 
   switch (light.currentState()) {
     case LIGHT_OFF: {

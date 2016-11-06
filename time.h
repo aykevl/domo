@@ -12,6 +12,13 @@ class Time {
   uint8_t second;
 
 public:
+  Time(int16_t timezone=TIMEZONE) {
+    this->hour     = 0;
+    this->minute   = 0;
+    this->second   = 0;
+    this->timezone = timezone;
+  }
+
   Time(uint64_t unixSeconds, int16_t timezone=TIMEZONE) {
     uint32_t s = (unixSeconds+(int32_t)timezone*60) % 86400;
     this->hour     = s / 3600;

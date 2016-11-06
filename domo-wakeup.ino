@@ -7,11 +7,13 @@ const uint8_t BUTTON_PIN = D1;
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 #include <ArduinoOTA.h>
+#include <EEPROM.h>
+#include "settings.h"
 #include "wifi-led.h"
 #include "time.h"
 #include "button.h"
 #include "light.h"
-WakeupLight light(LIGHT_PIN);
+WakeupLight light;
 #include "server.h"
 
 Button button(BUTTON_PIN);
@@ -23,6 +25,8 @@ void setup() {
   Serial.begin(115200);
   Serial.println(F("begin"));
 
+  Settings.begin();
+  light.begin(LIGHT_PIN);
   WifiLed.begin(D5); // D4 is the onboard LED of the ESP-12E
   wifiSetup();
   serverSetup();

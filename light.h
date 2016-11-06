@@ -10,29 +10,54 @@ typedef enum {
 } lightState_t;
 
 // Transition times in ms
-const float LIGHT_TIME_SLOWSTART = 1800000; // 30min
-const float LIGHT_TIME_FASTSTART = 500;
-const float LIGHT_TIME_STOP      = 500;
-
-uint32_t wakeupDuration = LIGHT_TIME_SLOWSTART;
-Time wakeupTime(7, 15, 0);
+const float LIGHT_TIME_FADE = 500.0;
 
 class WakeupLight {
   uint8_t pin;
   lightState_t state;
   unsigned long transitionStart;
   bool wasInWakeup;
+  Time time;
+  uint32_t duration;
 
   public:
 
-    WakeupLight(uint8_t pin) {
+    void begin(uint8_t pin) {
       this->pin = pin;
       this->state = LIGHT_OFF;
       this->transitionStart = millis();
       this->wasInWakeup = false;
+      time.setHour(Settings.data.wake_hour);
+      time.setMinute(Settings.data.wake_minute);
+      duration = Settings.data.wake_duration * 60000;
 
       pinMode(pin, OUTPUT);
       digitalWrite(pin, 0);
+    }
+
+    Time getTime() {
+      return time;
+    }
+
+    uint32_t getDuration() {
+      return duration;
+    }
+
+    void setWakeup(int32_t hour, int32_t minute, int32_t duration) {
+      if (time.setHour(hour)) {
+        Settings.data.wake_hour = hour;
+      }
+
+      if (time.setMinute(minute)) {
+        Settings.data.wake_minute = minute;
+      }
+
+      if (duration >= 0 && duration <= 60) {
+        this->duration = duration * 60000;
+        Settings.data.wake_duration = duration;
+      }
+
+      Settings.save();
     }
 
     void loop() {
@@ -53,21 +78,21 @@ class WakeupLight {
       //float y = currentBrightness();
       //float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_SLOWSTART case in currentBrightness
       state = LIGHT_SLOWSTART;
-      transitionStart = millis(); // - x*wakeupDuration;
+      transitionStart = millis(); // - x*duration;
       loop();
     }
 
     void on() {
       float y = currentBrightness();
       state = LIGHT_FASTSTART;
-      transitionStart = millis() - y*LIGHT_TIME_FASTSTART;
+      transitionStart = millis() - y*LIGHT_TIME_FADE;
       loop();
     }
 
     void off() {
       float y = currentBrightness();
       state = LIGHT_STOP;
-      transitionStart = millis() - (1.0-y)*LIGHT_TIME_STOP;
+      transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
       loop();
     }
 
@@ -89,7 +114,7 @@ class WakeupLight {
         case LIGHT_OFF:
           return 0.0;
         case LIGHT_SLOWSTART: {
-          float x = (float)(millis() - transitionStart) / wakeupDuration;
+          float x = (float)(millis() - transitionStart) / duration;
           float y = (pow(2.0, x*8.0) - 1.0) / 255.0;
           if (y > 1.0) {
             state = LIGHT_ON;
@@ -98,7 +123,7 @@ class WakeupLight {
           return y;
         }
         case LIGHT_FASTSTART: {
-          float y = (float)(millis() - transitionStart) / LIGHT_TIME_FASTSTART;
+          float y = (float)(millis() - transitionStart) / LIGHT_TIME_FADE;
           if (y > 1.0) {
             state = LIGHT_ON;
             return 1.0;
@@ -108,7 +133,7 @@ class WakeupLight {
         case LIGHT_ON:
           return 1.0;
         case LIGHT_STOP: {
-          float y = 1.0 - (float)(millis() - transitionStart) / LIGHT_TIME_STOP;
+          float y = 1.0 - (float)(millis() - transitionStart) / LIGHT_TIME_FADE;
           if (y < 0.0) {
             state = LIGHT_OFF;
             return 0.0;
