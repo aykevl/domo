@@ -153,7 +153,7 @@ class Date {
 };
 
 
-class ClockImpl {
+class ClockClass {
   const uint32_t CHECK_TIMEOUT = 10000;
 
   uint64_t lastUnixTime = 0;
@@ -215,4 +215,4 @@ public:
   }
 };
 
-ClockImpl Clock;
+ClockClass Clock;

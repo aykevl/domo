@@ -9,7 +9,7 @@ typedef enum {
   STATE_CONNECTED,
 } ConnState;
 
-class WifiLedImpl {
+class WifiLedClass {
   uint8_t pin = 0xff;
   ConnState state = STATE_DISCONNECTED;
   unsigned long ledBlinkStart = 0;
@@ -82,4 +82,4 @@ class WifiLedImpl {
     }
 };
 
-WifiLedImpl WifiLed;
+WifiLedClass WifiLed;

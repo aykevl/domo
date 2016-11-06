@@ -45,7 +45,7 @@ void loop() {
     switch (light.currentState()) {
       case LIGHT_OFF:
         Serial.println(F("button off -> wake"));
-        light.slowStart();
+        light.wake();
         break;
       case LIGHT_SLOWSTART:
         Serial.println(F("button wake -> on"));

@@ -41,14 +41,14 @@ class WakeupLight {
         // transition into wakeup
         if (state == LIGHT_OFF) {
           Serial.println("Light: Time to wake up!");
-          slowStart();
+          wake();
         }
       }
       wasInWakeup = nowInWakeup;
       analogWrite(pin, ceil(currentBrightness()*1023.0));
     }
 
-    void slowStart() {
+    void wake() {
       float y = currentBrightness();
       float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_SLOWSTART case in currentBrightness
       state = LIGHT_SLOWSTART;
