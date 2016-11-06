@@ -1,8 +1,7 @@
 
 #pragma once
 
-const char* SSID = "SSID";
-const char* PASSWORD = "password";
+#include "secrets.h"
 
 void wifiSetup() {
   WiFi.begin(SSID, PASSWORD);
