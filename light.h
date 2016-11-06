@@ -49,10 +49,11 @@ class WakeupLight {
     }
 
     void wake() {
-      float y = currentBrightness();
-      float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_SLOWSTART case in currentBrightness
+      // We could also start from the current brightness:
+      //float y = currentBrightness();
+      //float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_SLOWSTART case in currentBrightness
       state = LIGHT_SLOWSTART;
-      transitionStart = millis() - x*wakeupDuration;
+      transitionStart = millis(); // - x*wakeupDuration;
       loop();
     }
 

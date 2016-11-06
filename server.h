@@ -51,7 +51,12 @@ input[type=number] {
   <tr>
     <th>Wakeup:</th>
     <td>
-      <form method=POST action=/>
+      <form method="POST" action="/">
+        <input type="submit" name="off" value="Off">
+        <input type="submit" name="wake" value="Wake">
+        <input type="submit" name="on" value="On">
+      </form>
+      <form method="POST" action="/">
         <table>
           <tr>
             <td>State:</td>
@@ -102,6 +107,14 @@ void handleRoot() {
         ledStatus[i] = !ledStatus[i];
         digitalWrite(LED_PINS[i], ledStatus[i]);
       }
+    }
+
+    if (server.hasArg(F("off"))) {
+      light.off();
+    } else if (server.hasArg(F("wake"))) {
+      light.wake();
+    } else if (server.hasArg(F("on"))) {
+      light.on();
     }
 
     if (server.hasArg(F("wakeup-hour")) && server.hasArg(F("wakeup-minute"))) {
