@@ -45,7 +45,7 @@ class WakeupLight {
         }
       }
       wasInWakeup = nowInWakeup;
-      analogWrite(pin, ceil(currentBrightness()*255.0));
+      analogWrite(pin, ceil(currentBrightness()*1023.0));
     }
 
     void slowStart() {

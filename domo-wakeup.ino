@@ -17,6 +17,9 @@ WakeupLight light(LIGHT_PIN);
 Button button(BUTTON_PIN);
 
 void setup() {
+  analogWriteFreq(300);
+  analogWriteRange(1023);
+
   Serial.begin(115200);
   Serial.println(F("begin"));
 
