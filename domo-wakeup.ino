@@ -6,6 +6,7 @@ const uint8_t BUTTON_PIN = D1;
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
+#include <ArduinoOTA.h>
 #include "wifi-led.h"
 #include "time.h"
 #include "button.h"
@@ -26,9 +27,10 @@ void setup() {
 
 void loop() {
   wifiLoop();
-  serverLoop();
   WifiLed.loop();
   Clock.loop();
+  serverLoop();
+  ArduinoOTA.handle();
 
   static bool buttonWasPressed = false;
 

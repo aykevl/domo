@@ -10,11 +10,15 @@ void wifiSetup() {
 void wifiLoop() {
   static bool mdnsStarted = false;
   if (!mdnsStarted && WiFi.status() == WL_CONNECTED) {
-    if (!MDNS.begin("wakeup")) {
-      Serial.println("mDNS responder failed to start");
-    } else {
-      Serial.println("mDNS responder started");
-      mdnsStarted = true;
-    }
+    ArduinoOTA.setHostname("wakeup");
+#ifdef OTA_PASSWORD
+    ArduinoOTA.setPassword(OTA_PASSWORD);
+#endif
+
+    // This also starts the mDNS server
+    ArduinoOTA.begin();
+
+    // Not sure whether we need this...
+    MDNS.addService("http", "tcp", 80);
   }
 }
