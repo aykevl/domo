@@ -86,7 +86,7 @@ input[type=number] {
     <td>:time________: (:unixtime:)</td>
   </tr>
   <tr>
-    <th>Free heap:</th>
+    <th>Free RAM:</th>
     <td>:freeheap: bytes</td>
   </tr>
 </table>
