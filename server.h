@@ -42,21 +42,21 @@ input[type=number] {
 <table class="table-borders">
   <!--<tr>
     <th>D2:</th>
-    <td><form method=POST action=/>:led1: <input type=submit name=led1 value=Toggle></form></td>
+    <td><form method=POST action="./">:led1: <input type=submit name=led1 value=Toggle></form></td>
   </tr>
   <tr>
     <th>D3:</th>
-    <td><form method=POST action=/>:led2: <input type=submit name=led2 value=Toggle></form></td>
+    <td><form method=POST action="./">:led2: <input type=submit name=led2 value=Toggle></form></td>
   </tr>-->
   <tr>
     <th>Wakeup:</th>
     <td>
-      <form method="POST" action="/">
+      <form method="POST" action="./">
         <input type="submit" name="off" value="Off">
         <input type="submit" name="wake" value="Wake">
         <input type="submit" name="on" value="On">
       </form>
-      <form method="POST" action="/">
+      <form method="POST" action="./">
         <table>
           <tr>
             <td>State:</td>
