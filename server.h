@@ -4,6 +4,9 @@
 #include "time.h"
 #include "wifi.h"
 #include "assets.h"
+#include "base64.h"
+#include "blake2.h"
+#include "http-session.h"
 
 ESP8266WebServer server(80);
 
@@ -12,9 +15,41 @@ bool ledStatus[2] = {false, false};
 
 const char CONTENT_TYPE_HTML[] PROGMEM = "text/html; charset=utf-8";
 
+void handleLogin() {
+  WifiLed.busy();
+
+  if (server.method() == HTTP_POST && server.hasArg(F("password"))) {
+    if (httpSessionLogin(server)) {
+      server.sendHeader(F("Location"), F("./"));
+      server.send(303, NULL);
+      WifiLed.done();
+      return;
+    }
+  }
+
+  if (httpSessionIsAuthenticated(server)) {
+    server.sendHeader(F("Location"), F("./"));
+    server.send(303, NULL);
+    WifiLed.done();
+    return;
+  }
+
+  // Not logged in - show login page.
+  server.send(200, FPSTR(CONTENT_TYPE_HTML), FPSTR(asset_html_login));
+
+  WifiLed.done();
+}
+
 void handleRoot() {
   WifiLed.busy();
   int freeHeapInt = ESP.getFreeHeap();
+
+  if (!httpSessionIsAuthenticated(server)) {
+    server.sendHeader(F("Location"), F("./login"));
+    server.send(303, NULL);
+    WifiLed.done();
+    return;
+  }
 
   if (server.method() == HTTP_POST) {
     // TODO: CSRF checking
@@ -107,7 +142,7 @@ void handleRoot() {
   WifiLed.done();
 }
 
-void handleNotFound(){
+void handleNotFound() {
   WifiLed.busy();
   String message = F("File Not Found\n\n");
   message += F("URI: ");
@@ -130,7 +165,12 @@ void serverSetup() {
     digitalWrite(LED_PINS[i], ledStatus[i]);
   }
 
+  // For authentication / sessions.
+  const char *headers[] = {"Cookie"};
+  server.collectHeaders(headers, 1);
+
   server.on("/", handleRoot);
+  server.on("/login", handleLogin);
   server.on("/style.css", []() {
     WifiLed.busy();
     server.sendHeader(F("Cache-Control"), F("public,max-age=3600")); // 1 hour
