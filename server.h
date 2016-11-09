@@ -69,8 +69,8 @@ void handleRoot() {
   }
   root.replace(F(":freeheap:"), freeHeap);
 
-  uint64_t now = Clock.timestamp();
-  String timestamp = String((uint32_t)(now / 1000000)) + String((uint32_t)(now % 1000000));
+  uint32_t now = Clock.timestamp();
+  String timestamp(now);
   root.replace(F(":unixtime:"), timestamp);
 
   Time t = Time(now);

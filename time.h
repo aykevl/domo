@@ -19,7 +19,7 @@ public:
     this->timezone = timezone;
   }
 
-  Time(uint64_t unixSeconds, int16_t timezone=TIMEZONE) {
+  Time(uint32_t unixSeconds, int16_t timezone=TIMEZONE) {
     uint32_t s = (unixSeconds+(int32_t)timezone*60) % 86400;
     this->hour     = s / 3600;
     this->minute   = s / 60 % 60;
@@ -137,7 +137,7 @@ class Date {
   int16_t timezone;
 
   public:
-  Date(uint64_t unixSeconds, int16_t timezone=TIMEZONE) {
+  Date(uint32_t unixSeconds, int16_t timezone=TIMEZONE) {
     this->timezone = timezone;
     this->day = (unixSeconds+(int32_t)timezone*60) / 86400;
   }
@@ -146,11 +146,11 @@ class Date {
     this->day += day;
   }
 
-  uint64_t timestamp() {
+  uint32_t timestamp() {
     return day * 86400 - ((int32_t)timezone*60);
   }
 
-  uint64_t timestamp(Time time) {
+  uint32_t timestamp(Time time) {
     if (timezone != time.getTimezone()) {
       return 0; // TODO?
     }
@@ -163,14 +163,14 @@ class Date {
 class ClockClass {
   const uint32_t CHECK_TIMEOUT = 10000;
 
-  uint64_t lastUnixTime = 0;
+  uint64_t lastUnixMillis = 0;
   uint32_t millisAtUnixTime = 0;
   uint32_t lastCheck = 0;
   HTTPClient http;
 
 public:
   void loop() {
-    if ((lastCheck == 0 || millis() - lastCheck > CHECK_TIMEOUT) && lastUnixTime == 0 && WiFi.status() == WL_CONNECTED) {
+    if ((lastCheck == 0 || millis() - lastCheck > CHECK_TIMEOUT) && lastUnixMillis == 0 && WiFi.status() == WL_CONNECTED) {
       // no time is known yet
       lastCheck = millis();
 
@@ -182,7 +182,7 @@ public:
       if (httpCode == 200) {
         String payload = http.getString();
         // TODO: parse as 64-bit integer, and parse fractional part
-        lastUnixTime = (uint64_t)payload.toInt() * 1000;
+        lastUnixMillis = (uint64_t)payload.toInt() * 1000;
         millisAtUnixTime = millis();
         Serial.print("Clock: timestamp=");
         Serial.println((uint32_t)timestamp());
@@ -198,10 +198,12 @@ public:
     if (millisAtUnixTime == 0) {
       return 0;
     }
-    return lastUnixTime + (uint64_t)(millis() - millisAtUnixTime);
+    return lastUnixMillis + (uint64_t)(millis() - millisAtUnixTime);
   }
 
-  uint64_t timestamp() {
+  // uint32_t Unix time will only roll over in the year 2109, so should
+  // suffice.
+  uint32_t timestamp() {
     return timestamp_ms() / 1000;
   }
 
@@ -209,8 +211,8 @@ public:
     return Time(timestamp());
   }
 
-  uint64_t nextTimestamp(Time nextTime) {
-    uint64_t now = timestamp();
+  uint32_t nextTimestamp(Time nextTime) {
+    uint32_t now = timestamp();
     Date date(now);
     Time t(now);
 

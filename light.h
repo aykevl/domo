@@ -145,7 +145,7 @@ class WakeupLight {
 
   private:
     bool inWakeup() {
-      uint64_t now = Clock.timestamp();
+      uint32_t now = Clock.timestamp();
       if (now == 0) {
         // Clock is not yet initialized.
         return false;
