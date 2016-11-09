@@ -13,7 +13,9 @@ ESP8266WebServer server(80);
 const uint8_t LED_PINS[] = {D2, D3};
 bool ledStatus[2] = {false, false};
 
+const char CONTENT_TYPE_PLAIN[] PROGMEM = "text/plain";
 const char CONTENT_TYPE_HTML[] PROGMEM = "text/html; charset=utf-8";
+const char CONTENT_TYPE_CSS[] PROGMEM = "text/css";
 
 void handleLogin() {
   WifiLed.busy();
@@ -155,7 +157,7 @@ void handleNotFound() {
   for (uint8_t i=0; i<server.args(); i++){
     message += ' ' + server.argName(i) + F(": ") + server.arg(i) + '\n';
   }
-  server.send(404, "text/plain", message);
+  server.send(404, FPSTR(CONTENT_TYPE_PLAIN), message);
   WifiLed.done();
 }
 
@@ -179,7 +181,7 @@ void serverSetup() {
     // asctime() format. It is obsolete, but still supported.
     // Reference: https://tools.ietf.org/html/rfc7231#section-7.1.1.1
     server.sendHeader(F("Last-Modified"), FPSTR(asset_date));
-    server.send(200, "text/css", FPSTR(asset_css));
+    server.send(200, FPSTR(CONTENT_TYPE_CSS), FPSTR(asset_css));
     WifiLed.done();
   });
   server.onNotFound(handleNotFound);
