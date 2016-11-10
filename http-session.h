@@ -84,7 +84,7 @@ bool httpSessionIsAuthenticated(ESP8266WebServer &server) {
 
 bool httpSessionLogin(ESP8266WebServer &server) {
   String password = server.arg("password");
-  if (strlen(LOGIN_PASSWORD) != password.length() || httpSessionConstantTimeEq(LOGIN_PASSWORD, password.c_str(), password.length())) {
+  if (strlen(LOGIN_PASSWORD) == password.length() && httpSessionConstantTimeEq(LOGIN_PASSWORD, password.c_str(), password.length())) {
     server.sendHeader("Set-Cookie", "token=" + httpSessionGenerateToken(Clock.timestamp()) + ";Max-Age=" + String(SESSION_DURATION));
     return true;
   }
