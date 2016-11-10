@@ -22,7 +22,7 @@ void handleLogin() {
 
   if (server.method() == HTTP_POST && server.hasArg(F("password"))) {
     if (httpSessionLogin(server)) {
-      server.sendHeader(F("Location"), F("./"));
+      server.sendHeader(F("Location"), F("."));
       server.send(303, NULL);
       WifiLed.done();
       return;
@@ -30,7 +30,7 @@ void handleLogin() {
   }
 
   if (httpSessionIsAuthenticated(server)) {
-    server.sendHeader(F("Location"), F("./"));
+    server.sendHeader(F("Location"), F("."));
     server.send(303, NULL);
     WifiLed.done();
     return;
@@ -79,7 +79,7 @@ void handleRoot() {
       light.setWakeup(hour, minute, duration);
     }
 
-    server.sendHeader(F("Location"), F("/"));
+    server.sendHeader(F("Location"), F("."));
     server.send(303, NULL);
     WifiLed.done();
     return;
