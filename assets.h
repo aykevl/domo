@@ -19,7 +19,7 @@ const char asset_html_root[] PROGMEM = R"=====(
     <td><form method=POST action="">:led2: <input type=submit name=led2 value=Toggle></form></td>
   </tr>-->
   <tr>
-    <th>Wakeup:</th>
+    <th>Wakeup</th>
     <td>
       <form method="POST" action="">
         <input type="submit" name="off" value="Off">
@@ -52,11 +52,11 @@ const char asset_html_root[] PROGMEM = R"=====(
     </td>
   </tr>
   <tr>
-    <th>Current time:</th>
+    <th>Current time</th>
     <td>:time________: (:unixtime:)</td>
   </tr>
   <tr>
-    <th>Free RAM:</th>
+    <th>Free RAM</th>
     <td>:freeheap: bytes</td>
   </tr>
 </table>
@@ -70,24 +70,48 @@ const char asset_html_login[] PROGMEM = R"=====(
 
 <h1>Wakeup</h1>
 
-<form method="POST" action="">
-  <table>
-    <tr>
-      <th>Password:</th>
-      <td><input type="password" name="password"/></td>
-    </tr>
-  </table>
+<form method="POST" action="./login" style="text-align: center;">
+  <!-- Fake username field for Chrome -->
+  <div style="display: none;"><input type="text" name="username"></div>
+  <b>Password:</b>
+  <input type="password" name="password">
+  <input type="submit" value="Login">
 </form>
 )=====";
 
 const char asset_css[] PROGMEM = R"=====(
+html {
+  margin: 0;
+  padding: 0;
+  font-family: Roboto, sans-serif;
+}
+body {
+  max-width: 400px;
+  margin: 0 auto;
+  padding: 8px;
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
 table {
   border-collapse: collapse;
+  width: 100%;
 }
 table.table-borders > tbody > tr > th,
 table.table-borders > tbody > tr > td {
-  border: 1px solid #aaa;
-  align: left;
+  text-align: left;
+  vertical-align: top;
+  padding: 4px 8px;
+}
+table.table-borders > tbody > tr:nth-child(even) {
+  background: #e0fdff;
+}
+table.table-borders > tbody > tr:nth-child(odd) {
+  background: #e7ffe0;
 }
 .input-time {
   border: 1px solid gray;
@@ -95,10 +119,14 @@ table.table-borders > tbody > tr > td {
 }
 input[type=number] {
   border: 1px solid gray;
+  background: inherit;
+  font-size: inherit;
+  padding: 2px;
 }
 .input-time input[type=number] {
   width: 2em;
   border: none;
   text-align: right;
+  margin: 0;
 }
 )=====";
