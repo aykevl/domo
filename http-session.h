@@ -1,5 +1,5 @@
 
-const uint32_t SESSION_DURATION = 2592000;
+const uint32_t SESSION_DURATION = 30780000; // 1 year
 
 // Compare two byte buffers in constant time.
 bool httpSessionConstantTimeEq(const char* buf1, const char* buf2, size_t length) {
