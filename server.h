@@ -139,6 +139,9 @@ void handleRoot() {
   }
   root.replace(F(":wkp"), percent);
 
+  root.replace(F(":*T:"), String(htsensor.getTemperature(), 1));
+  root.replace(F(":*H:"), String(htsensor.getHumidity(), 1));
+
   server.send(200, FPSTR(CONTENT_TYPE_HTML), root);
 
   WifiLed.done();

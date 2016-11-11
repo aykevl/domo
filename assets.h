@@ -59,6 +59,14 @@ const char asset_html_root[] PROGMEM = R"=====(
     <th>Free RAM</th>
     <td>:freeheap: bytes</td>
   </tr>
+  <tr>
+    <th>Temperature</th>
+    <td>:*T:°C</td>
+  </tr>
+  <tr>
+    <th>Humidity</th>
+    <td>:*H:%</td>
+  </tr>
 </table>
 )=====";
 

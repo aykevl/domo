@@ -13,7 +13,9 @@ const uint8_t BUTTON_PIN = D1;
 #include "time.h"
 #include "button.h"
 #include "light.h"
+#include "htsensor.h"
 WakeupLight light;
+HTSensor htsensor;
 #include "server.h"
 
 Button button(BUTTON_PIN);
@@ -29,6 +31,7 @@ void setup() {
   light.begin(LIGHT_PIN);
   WifiLed.begin(D5); // D4 is the onboard LED of the ESP-12E
   wifiSetup();
+  htsensor.setup();
   serverSetup();
 }
 
@@ -36,6 +39,7 @@ void loop() {
   wifiLoop();
   WifiLed.loop();
   Clock.loop();
+  htsensor.loop();
   serverLoop();
   ArduinoOTA.handle();
 
