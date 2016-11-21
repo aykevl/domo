@@ -10,9 +10,6 @@
 
 ESP8266WebServer server(80);
 
-const uint8_t LED_PINS[] = {D2, D3};
-bool ledStatus[2] = {false, false};
-
 const char CONTENT_TYPE_PLAIN[] PROGMEM = "text/plain";
 const char CONTENT_TYPE_HTML[] PROGMEM = "text/html; charset=utf-8";
 const char CONTENT_TYPE_CSS[] PROGMEM = "text/css";
@@ -56,14 +53,6 @@ void handleRoot() {
   if (server.method() == HTTP_POST) {
     // TODO: CSRF checking
 
-    const char *ledKeys[] = {"led1", "led2"};
-    for (int i=0; i<2; i++) {
-      if (server.hasArg(ledKeys[i])) {
-        ledStatus[i] = !ledStatus[i];
-        digitalWrite(LED_PINS[i], ledStatus[i]);
-      }
-    }
-
     if (server.hasArg(F("off"))) {
       light.off();
     } else if (server.hasArg(F("wake"))) {
@@ -88,16 +77,6 @@ void handleRoot() {
   // Use strings with the exact same length, as that replacement is much
   // faster (only needs to replace the required bytes).
   String root = String(FPSTR(asset_html_root));
-  if (ledStatus[0]) {
-    root.replace(F(":led1:"), F("HIGH  "));
-  } else {
-    root.replace(F(":led1:"), F("LOW   "));
-  }
-  if (ledStatus[1]) {
-    root.replace(F(":led2:"), F("HIGH  "));
-  } else {
-    root.replace(F(":led2:"), F("LOW   "));
-  }
 
   String freeHeap = String(freeHeapInt);
   freeHeap.reserve(10);
@@ -165,11 +144,6 @@ void handleNotFound() {
 }
 
 void serverSetup() {
-  for (int i=0; i<2; i++) {
-    pinMode(LED_PINS[i], OUTPUT);
-    digitalWrite(LED_PINS[i], ledStatus[i]);
-  }
-
   // For authentication / sessions.
   const char *headers[] = {"Cookie"};
   server.collectHeaders(headers, 1);

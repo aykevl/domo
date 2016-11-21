@@ -10,14 +10,6 @@ const char asset_html_root[] PROGMEM = R"=====(
 <h1>Wakeup</h1>
 
 <table class="table-borders">
-  <!--<tr>
-    <th>D2:</th>
-    <td><form method=POST action="">:led1: <input type=submit name=led1 value=Toggle></form></td>
-  </tr>
-  <tr>
-    <th>D3:</th>
-    <td><form method=POST action="">:led2: <input type=submit name=led2 value=Toggle></form></td>
-  </tr>-->
   <tr>
     <th>Wakeup</th>
     <td>
