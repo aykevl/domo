@@ -8,6 +8,7 @@ const uint8_t BUTTON_PIN = D1;
 #include <ESP8266HTTPClient.h>
 #include <ArduinoOTA.h>
 #include <EEPROM.h>
+#include "config.h"
 #include "settings.h"
 #include "wifi-led.h"
 #include "time.h"
@@ -25,22 +26,25 @@ void setup() {
   analogWriteRange(1023);
 
   Serial.begin(115200);
-  Serial.println(F("begin"));
+  Serial.println(F("ESP8266 begin"));
 
   Settings.begin();
   light.begin(LIGHT_PIN);
-  WifiLed.begin(D5); // D4 is the onboard LED of the ESP-12E
-  wifiSetup();
+  WifiLed.begin(D2); // D4 is the onboard LED of the ESP-12E
   htsensor.setup();
+  wifi.setup();
   serverSetup();
+  radioSetup();
+  Serial.println(F("ESP8266 setup complete"));
 }
 
 void loop() {
-  wifiLoop();
+  wifi.loop();
   WifiLed.loop();
   Clock.loop();
   htsensor.loop();
   serverLoop();
+  radioLoop();
   ArduinoOTA.handle();
 
   static bool buttonWasPressed = false;

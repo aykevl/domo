@@ -176,7 +176,7 @@ public:
 
       // This blocks
       Serial.println("Clock: requesting time...");
-      http.begin("https://aykevl.nl/api/time", "1C:AB:65:41:4E:A6:4C:BF:58:34:51:4B:66:3F:B0:3D:CD:AA:C8:4C");
+      http.begin(TIME_URL, TIME_FINGERPRINT);
 
       int httpCode = http.GET();
       if (httpCode == 200) {

@@ -3,7 +3,7 @@
 
 #include "DHT.h"
 
-const uint8_t HT_PIN = D6;
+const uint8_t HT_PIN = D3;
 const uint32_t HT_INTERVAL = 60000; // 1 minute
 DHT _dht(HT_PIN, DHT22);
 
