@@ -1,4 +1,6 @@
 
+// Note: this code hasn't been properly reviewed for security problems.
+
 const uint32_t SESSION_DURATION = 30780000; // 1 year
 
 // Compare two byte buffers in constant time.
@@ -62,8 +64,10 @@ bool httpSessionIsAuthenticated(ESP8266WebServer &server) {
 
   uint32_t now = Clock.timestamp();
   if (creationTime < now - SESSION_DURATION || creationTime > now) {
-    //server.sendHeader("X-Debug", "token creation time outside range");
-    return false;
+    if (!(now == 0 && creationTime == 0)) { // if 0, time couldn't be requested
+      //server.sendHeader("X-Debug", "token creation time outside range");
+      return false;
+    }
   }
 
   // Verify this is the right token.
