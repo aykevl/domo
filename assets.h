@@ -86,14 +86,14 @@ html {
   font-family: Roboto, sans-serif;
 }
 body {
-  max-width: 400px;
+  max-width: 500px;
   margin: 0 auto;
-  padding: 8px;
+  padding: 8px 0;
 }
 
 h1 {
   margin-top: 0;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
   text-align: center;
 }
 
@@ -105,13 +105,10 @@ table.table-borders > tbody > tr > th,
 table.table-borders > tbody > tr > td {
   text-align: left;
   vertical-align: top;
-  padding: 4px 8px;
+  padding: 8px 16px;
 }
-table.table-borders > tbody > tr:nth-child(even) {
-  background: #e0fdff;
-}
-table.table-borders > tbody > tr:nth-child(odd) {
-  background: #e7ffe0;
+table.table-borders > tbody > tr:not(:first-child) {
+  border-top: #ddd 2px dotted;
 }
 .input-time {
   border: 1px solid gray;
