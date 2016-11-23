@@ -35,12 +35,12 @@ class HTSensor {
         if (!isnan(temperature)) {
           root.set("value", temperature, 1);
           const size_t msgLen = root.printTo(msg, msgMaxLen);
-          mqtt.publish(MQTT_PREFIX "s/temperature", (uint8_t*)msg, msgLen, 1);
+          mqtt.publish(MQTT_PREFIX "s/temperature", msg);
         }
         if (!isnan(humidity)) {
           root.set("value", humidity, 1);
           const size_t msgLen = root.printTo(msg, msgMaxLen);
-          mqtt.publish(MQTT_PREFIX "s/humidity", (uint8_t*)msg, msgLen, 1);
+          mqtt.publish(MQTT_PREFIX "s/humidity", msg);
         }
       }
     }

@@ -1,15 +1,19 @@
 
 const uint8_t LIGHT_PIN = D0;
 const uint8_t BUTTON_PIN = D1;
+
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
+#include <PubSubClient.h>
 #include <ArduinoOTA.h>
 #include <EEPROM.h>
 #include "config.h"
 #include "settings.h"
+#include "mqtt.h"
+#include "wifi.h"
 #include "wifi-led.h"
 #include "time.h"
 #include "button.h"
@@ -56,15 +60,15 @@ void loop() {
   if (buttonPressed && !buttonWasPressed) {
     switch (light.currentState()) {
       case LIGHT_OFF:
-        Serial.println(F("button off -> on"));
+        log(F("button off -> on"));
         light.on();
         break;
       case LIGHT_SLOWSTART:
-        Serial.println(F("button wake -> on"));
+        log(F("button wake -> on"));
         light.on();
         break;
       case LIGHT_ON:
-        Serial.println(F("button on -> off"));
+        log(F("button on -> off"));
         light.off();
         break;
     }
