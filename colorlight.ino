@@ -1,7 +1,9 @@
 
 #include "radio.h"
 
+const uint8_t COLOR_FLAG_DISABLED  = 0b10000000;
 const uint8_t COLOR_FLAG_LOOPING   = 0b01000000;
+const uint8_t COLOR_FLAG_REVERSE   = 0b00100000;
 const uint8_t COLOR_MODE_MASK      = 0b00000011; // bit 7-8: mode
 const uint8_t COLOR_MODE_RGB       = 0b00000000; // mode value 0
 const uint8_t COLOR_MODE_HSV       = 0b00000001; // mode value 1
@@ -37,7 +39,9 @@ void colorLightSend(uint8_t *arg) {
       values["mode"] = "!unreachable";
       break;
   }
+  values.set("disabled",   (bool)(arg[0] & COLOR_FLAG_DISABLED));
   values.set("looping",    (bool)(arg[0] & COLOR_FLAG_LOOPING));
+  values.set("reverse",    (bool)(arg[0] & COLOR_FLAG_REVERSE));
   values.set("time",       (ufloat8_dec(arg[1]) << 8) / 1000.0);
   values.set("hue",        arg[2] / 255.0, 3);
   values.set("saturation", arg[3] / 255.0, 3);
@@ -81,8 +85,14 @@ void colorLightReceive(char *json) {
   } else {
     msg[0] = COLOR_MODE_UNDEFINED;
   }
+  if (value["disabled"]) {
+    msg[0] |= COLOR_FLAG_DISABLED;
+  }
   if (value["looping"]) {
     msg[0] |= COLOR_FLAG_LOOPING;
+  }
+  if (value["reverse"]) {
+    msg[0] |= COLOR_FLAG_REVERSE;
   }
   float time = value["time"];
   msg[1] = ufloat8_enc((uint32_t)(time * 1000.0) >> 8);
