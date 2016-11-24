@@ -13,7 +13,7 @@ const uint8_t COLOR_MODE_UNDEFINED = 0b00000011; // mode value 3 (undefined)
 void colorLightSend(uint8_t *arg) {
   if (!mqtt.connected()) return;
 
-  const size_t messageMaxLen = 170; // ~150 max
+  const size_t messageMaxLen = 256; // ~174
   uint8_t message[messageMaxLen];
   size_t messageLen = 0;
 
