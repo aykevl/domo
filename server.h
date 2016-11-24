@@ -101,7 +101,7 @@ void handleRoot() {
       root.replace(F(":wakeup_state:"), F("Light off     "));
       break;
     }
-    case LIGHT_SLOWSTART: {
+    case LIGHT_WAKE: {
       root.replace(F(":wakeup_state:"), F("Waking up     "));
       break;
     }

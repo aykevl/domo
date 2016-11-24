@@ -63,7 +63,7 @@ void loop() {
         log(F("button off -> on"));
         light.on();
         break;
-      case LIGHT_SLOWSTART:
+      case LIGHT_WAKE:
         log(F("button wake -> on"));
         light.on();
         break;

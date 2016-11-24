@@ -3,7 +3,7 @@
 
 typedef enum {
   LIGHT_OFF,
-  LIGHT_SLOWSTART, // in minutes
+  LIGHT_WAKE,      // in minutes
   LIGHT_FASTSTART, // in seconds
   LIGHT_ON,
   LIGHT_STOP,      // in seconds
@@ -76,8 +76,8 @@ class WakeupLight {
     void wake() {
       // We could also start from the current brightness:
       //float y = currentBrightness();
-      //float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_SLOWSTART case in currentBrightness
-      state = LIGHT_SLOWSTART;
+      //float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_WAKE case in currentBrightness
+      state = LIGHT_WAKE;
       transitionStart = millis(); // - x*duration;
       loop();
     }
@@ -98,8 +98,8 @@ class WakeupLight {
 
     lightState_t currentState() {
       switch (state) {
-        case LIGHT_SLOWSTART:
-          return LIGHT_SLOWSTART;
+        case LIGHT_WAKE:
+          return LIGHT_WAKE;
         case LIGHT_FASTSTART:
         case LIGHT_ON:
           return LIGHT_ON;
@@ -113,7 +113,7 @@ class WakeupLight {
       switch (state) {
         case LIGHT_OFF:
           return 0.0;
-        case LIGHT_SLOWSTART: {
+        case LIGHT_WAKE: {
           float x = (float)(millis() - transitionStart) / duration;
           float y = (pow(2.0, x*8.0) - 1.0) / 255.0;
           if (y > 1.0) {
