@@ -18,6 +18,7 @@ void colorLightSend(uint8_t *arg) {
 
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
+  root["origin"] = CLIENT_ID;
   JsonObject& values = root.createNestedObject("value");
   switch (arg[0] & COLOR_MODE_MASK) {
     case COLOR_MODE_RGB:

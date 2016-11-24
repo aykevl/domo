@@ -62,6 +62,11 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     return;
   }
 
+  const char *origin = root["origin"];
+  if (origin != NULL && strcmp(origin, CLIENT_ID) == 0) {
+    // Received my own message.
+    return;
+  }
 
   if (strcmp(topic, MQTT_PREFIX "a/colorlight") == 0) {
     colorLightReceive(value);
