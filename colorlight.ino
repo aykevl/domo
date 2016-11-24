@@ -15,7 +15,6 @@ void colorLightSend(uint8_t *arg) {
 
   const size_t messageMaxLen = 256; // ~174
   uint8_t message[messageMaxLen];
-  size_t messageLen = 0;
 
   DynamicJsonBuffer jsonBuffer;
   JsonObject& root = jsonBuffer.createObject();
@@ -50,26 +49,14 @@ void colorLightSend(uint8_t *arg) {
   values.set("green",      arg[6] / 255.0, 3);
   values.set("blue",       arg[7] / 255.0, 3);
 
-  messageLen = root.printTo((char*)message, messageMaxLen);
+  size_t messageLen = root.printTo((char*)message, messageMaxLen);
 
   // We just want to update the status once in a while, so it doesn't
   // need a QoS (thus 0).
   mqtt.publish(MQTT_PREFIX "a/colorlight", message, messageLen, true);
 }
 
-void colorLightReceive(char *json) {
-  DynamicJsonBuffer jsonBuffer;
-  JsonObject& root = jsonBuffer.parseObject(json);
-  if (!root.success()) {
-    log(F("colorlight: could not parse JSON"));
-    return;
-  }
-  JsonObject& value = root["value"];
-  if (!value.success()) {
-    log(F("colorlight: no 'value' key"));
-    return;
-  }
-
+void colorLightReceive(JsonObject &value) {
   uint8_t msg[8];
   const char *mode = value["mode"];
   if (mode == NULL) {

@@ -1,4 +1,4 @@
 
 #pragma once
 
-void colorLightReceive(char *data);
+void colorLightReceive(JsonObject &value);

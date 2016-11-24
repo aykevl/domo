@@ -46,9 +46,22 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
   }
 
   // Turn it into a C string (needed for the JSON parser).
-  char value[length+2];
-  memset(value, 0, length+2);
-  memcpy(value, payload, length);
+  char json[length+1];
+  json[length] = 0;
+  memcpy(json, payload, length);
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.parseObject(json);
+  if (!root.success()) {
+    log(F("colorlight: could not parse JSON"));
+    return;
+  }
+  JsonObject& value = root["value"];
+  if (!value.success()) {
+    log(F("colorlight: no 'value' key"));
+    return;
+  }
+
 
   if (strcmp(topic, MQTT_PREFIX "a/colorlight") == 0) {
     colorLightReceive(value);
