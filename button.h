@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include "Arduino.h"
+
 // states in the state machine
 const uint8_t RELEASED = 0;
 const uint8_t RELEASED_BOUNCE = 1;

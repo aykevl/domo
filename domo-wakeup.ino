@@ -1,10 +1,7 @@
 
-const uint8_t LIGHT_PIN = D0;
+const uint8_t WAKEUP_PIN = D0;
 const uint8_t BUTTON_PIN = D1;
 
-#include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266HTTPClient.h>
 #include <PubSubClient.h>
@@ -17,9 +14,8 @@ const uint8_t BUTTON_PIN = D1;
 #include "wifi-led.h"
 #include "time.h"
 #include "button.h"
-#include "light.h"
+#include "wakeup.h"
 #include "htsensor.h"
-WakeupLight light;
 HTSensor htsensor;
 #include "server.h"
 
@@ -33,7 +29,7 @@ void setup() {
   Serial.println(F("ESP8266 begin"));
 
   Settings.begin();
-  light.begin(LIGHT_PIN);
+  wakeup.begin(WAKEUP_PIN);
   WifiLed.begin(D2); // D4 is the onboard LED of the ESP-12E
   htsensor.setup();
   wifi.setup();
@@ -54,22 +50,22 @@ void loop() {
   static bool buttonWasPressed = false;
 
   button.loop();
-  light.loop();
+  wakeup.loop();
 
   bool buttonPressed = button.pressed();
   if (buttonPressed && !buttonWasPressed) {
-    switch (light.currentState()) {
+    switch (wakeup.currentState()) {
       case LIGHT_OFF:
         log(F("button off -> on"));
-        light.on();
+        wakeup.on();
         break;
       case LIGHT_WAKE:
         log(F("button wake -> on"));
-        light.on();
+        wakeup.on();
         break;
       case LIGHT_ON:
         log(F("button on -> off"));
-        light.off();
+        wakeup.off();
         break;
     }
   }

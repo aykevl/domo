@@ -1,5 +1,12 @@
 
+#include <Arduino.h>
+#include <ArduinoJson.h>
+
+#include "colorlight.h"
+#include "config.h"
 #include "radio.h"
+#include "mqtt.h"
+#include "ufloat8.h"
 
 const uint8_t COLOR_FLAG_DISABLED  = 0b10000000;
 const uint8_t COLOR_FLAG_LOOPING   = 0b01000000;

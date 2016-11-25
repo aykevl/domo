@@ -2,6 +2,7 @@
 #include <ArduinoJson.h>
 
 #include "DHT.h"
+#include "mqtt.h"
 
 const uint8_t HT_PIN = D3;
 const uint32_t HT_INTERVAL = 60000; // 1 minute

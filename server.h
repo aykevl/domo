@@ -54,18 +54,18 @@ void handleRoot() {
     // TODO: CSRF checking
 
     if (server.hasArg(F("off"))) {
-      light.off();
+      wakeup.off();
     } else if (server.hasArg(F("wake"))) {
-      light.wake();
+      wakeup.wake();
     } else if (server.hasArg(F("on"))) {
-      light.on();
+      wakeup.on();
     }
 
     if (server.hasArg(F("wakeup-hour")) && server.hasArg(F("wakeup-minute")) && server.hasArg("wakeup-duration")) {
       int32_t hour = String(server.arg(F("wakeup-hour"))).toInt();
       int32_t minute = String(server.arg(F("wakeup-minute"))).toInt();
       int32_t duration = String(server.arg(F("wakeup-duration"))).toInt();
-      light.setWakeup(hour, minute, duration);
+      wakeup.setWakeup(hour, minute, duration);
     }
 
     server.sendHeader(F("Location"), F("."));
@@ -92,11 +92,11 @@ void handleRoot() {
   Time t = Time(now);
   root.replace(F(":time________:"), t.format());
 
-  root.replace(F(":H"), light.getTime().formatHour());
-  root.replace(F(":M"), light.getTime().formatMinute());
-  root.replace(F(":D"), String(light.getDuration() / 60000));
+  root.replace(F(":H"), wakeup.getTime().formatHour());
+  root.replace(F(":M"), wakeup.getTime().formatMinute());
+  root.replace(F(":D"), String(wakeup.getDuration() / 60000));
 
-  switch (light.currentState()) {
+  switch (wakeup.currentState()) {
     case LIGHT_OFF: {
       root.replace(F(":wakeup_state:"), F("Light off     "));
       break;
@@ -111,7 +111,7 @@ void handleRoot() {
     }
   }
 
-  String p((uint8_t)(light.currentBrightness()*100.0));
+  String p((uint8_t)(wakeup.currentBrightness()*100.0));
   String percent(F("   %"));
   for (uint8_t i=0; i<p.length(); i++) {
     percent[i+(3-p.length())] = p[i];

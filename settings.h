@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <EEPROM.h>
+
 typedef struct {
   uint8_t version;
   uint8_t size;
@@ -53,4 +55,4 @@ class SettingsClass {
     }
 };
 
-SettingsClass Settings;
+extern SettingsClass Settings;

@@ -5,6 +5,9 @@
 #include "radio.h"
 #include "config.h"
 #include "ufloat8.h"
+#include "colorlight.h"
+
+const uint8_t RADIO_MSG_REQUEST = 0x80;
 
 RF24 radio(D4, D8);
 

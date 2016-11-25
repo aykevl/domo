@@ -20,7 +20,7 @@ String httpSessionGenerateToken(uint32_t ts) {
   String token(ts);
   // Generate a MAC over the payload, with the given key.
   uint8_t hashRaw[32];
-  if (blake2s(hashRaw, 32, token.c_str(), token.length(), SECRET, sizeof(SECRET))) {
+  if (blake2s(hashRaw, 32, token.c_str(), token.length(), SECRET, SECRET_SIZE)) {
     return String(F("fail"));
   }
   String hash = base64::encode(hashRaw, 32);

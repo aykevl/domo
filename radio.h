@@ -6,4 +6,4 @@ enum {
   RADIO_MSG_COLOR,
 };
 
-uint8_t RADIO_MSG_REQUEST = 0x80;
+bool radioSend(uint8_t messageType, uint8_t *data, size_t length);
