@@ -57,6 +57,18 @@ int32_t Time::dayTime() {
   return ((int32_t)hour * 3600 + (int32_t)minute * 60 + (int32_t)second) - (int32_t)timezone * 60;
 }
 
+bool Time::setDayTime(int32_t dayTime) {
+  dayTime += (int32_t)timezone * 60;
+  if (dayTime < 0 || dayTime > 86400) {
+    return false;
+  }
+
+  this->hour     = dayTime / 3600;
+  this->minute   = dayTime / 60 % 60;
+  this->second   = dayTime % 60;
+  return true;
+}
+
 String Time::format() {
   // TODO: negative time zone
   String hours = String(hour);

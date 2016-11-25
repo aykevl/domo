@@ -39,6 +39,20 @@ void WakeupLight::setWakeup(int32_t hour, int32_t minute, int32_t duration) {
   Settings.save();
 }
 
+void WakeupLight::setWakeup(int32_t dayTime, int32_t duration) {
+  if (time.setDayTime(dayTime)) {
+    Settings.data.wake_hour   = time.getHour();
+    Settings.data.wake_minute = time.getMinute();
+  }
+
+  if (duration >= 0 && duration <= 60) {
+    this->duration = duration * 60000;
+    Settings.data.wake_duration = duration;
+  }
+
+  Settings.save();
+}
+
 void WakeupLight::loop() {
   bool nowInWakeup = inWakeup();
   if (!wasInWakeup && nowInWakeup) {
@@ -52,7 +66,24 @@ void WakeupLight::loop() {
   analogWrite(pin, ceil(currentBrightness()*1023.0));
 }
 
+void WakeupLight::off() {
+  _off();
+  sendState();
+}
+
+void WakeupLight::_off() {
+  float y = currentBrightness();
+  state = LIGHT_STOP;
+  transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
+  loop();
+}
+
 void WakeupLight::wake() {
+  _wake();
+  sendState();
+}
+
+void WakeupLight::_wake() {
   // We could also start from the current brightness:
   //float y = currentBrightness();
   //float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_WAKE case in currentBrightness
@@ -60,17 +91,16 @@ void WakeupLight::wake() {
   transitionStart = millis(); // - x*duration;
   loop();
 }
+
 void WakeupLight::on() {
+  _on();
+  sendState();
+}
+
+void WakeupLight::_on() {
   float y = currentBrightness();
   state = LIGHT_FASTSTART;
   transitionStart = millis() - y*LIGHT_TIME_FADE;
-  loop();
-}
-
-void WakeupLight::off() {
-  float y = currentBrightness();
-  state = LIGHT_STOP;
-  transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
   loop();
 }
 
@@ -129,4 +159,66 @@ bool WakeupLight::inWakeup() {
   uint32_t ts_now = Time(now).dayTime(); // seconds in this day (including TZ)
   uint32_t ts_wake = time.dayTime();
   return ts_now >= ts_wake && ts_now <= ts_wake+(duration/1000);
+}
+
+void WakeupLight::sendState() {
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root["origin"] = CLIENT_ID;
+  JsonObject& values = root.createNestedObject("value");
+
+  switch (currentState()) {
+    case LIGHT_OFF:
+      values["state"] = "off";
+      break;
+    case LIGHT_WAKE:
+      values["state"] = "wake";
+      break;
+    case LIGHT_ON:
+      values["state"] = "on";
+      break;
+  }
+  values["time"] = time.dayTime();
+  values["duration"] = duration / 1000.0;
+  values["switchDuration"] = LIGHT_TIME_FADE / 1000.0;
+
+  const size_t messageMaxLen = 128;
+  uint8_t message[messageMaxLen];
+  size_t messageLen = root.printTo((char*)message, messageMaxLen);
+
+  mqtt.publish(MQTT_PREFIX "a/wakeup", message, messageLen, true);
+}
+
+void WakeupLight::recvState(JsonObject &value) {
+  log("got wakeup change");
+
+  const char *state = value["state"];
+  if (state != NULL) {
+    lightState_t newState = LIGHT_UNDEFINED;
+    if (strcmp(state, "off") == 0) {
+      newState = LIGHT_OFF;
+    } else if (strcmp(state, "wake") == 0) {
+      newState = LIGHT_WAKE;
+    } else if (strcmp(state, "on") == 0) {
+      newState = LIGHT_ON;
+    }
+    if (newState != LIGHT_UNDEFINED && newState != currentState()) {
+      switch (newState) {
+        case LIGHT_OFF:
+          _off();
+          break;
+        case LIGHT_WAKE:
+          _wake();
+          break;
+        case LIGHT_ON:
+          _on();
+          break;
+      }
+    }
+  }
+
+  uint32_t newDuration = (uint32_t)value["duration"] / 60;
+  uint32_t newTime = value["time"];
+
+  setWakeup(newTime, newDuration);
 }

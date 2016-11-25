@@ -25,6 +25,7 @@ public:
   uint8_t getTZMinute() { return timezone % 60; }
   uint16_t getTimezone() { return timezone; }
   int32_t dayTime();
+  bool setDayTime(int32_t);
   String format();
   String formatHour();
   String formatMinute();

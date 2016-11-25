@@ -1,9 +1,12 @@
 
 #pragma once
 
+#include <ArduinoJson.h>
+
 #include "time.h"
 
 typedef enum {
+  LIGHT_UNDEFINED,
   LIGHT_OFF,
   LIGHT_WAKE,      // in minutes
   LIGHT_FASTSTART, // in seconds
@@ -27,15 +30,21 @@ public:
   Time getTime() { return time; }
   uint32_t getDuration() { return duration; }
   void setWakeup(int32_t hour, int32_t minute, int32_t duration);
+  void setWakeup(int32_t dayTime, int32_t duration);
   void loop();
+  void off();
   void wake();
   void on();
-  void off();
   lightState_t currentState();
   float currentBrightness();
+  void recvState(JsonObject &value);
 
 private:
   bool inWakeup();
+  void sendState();
+  void _off();
+  void _wake();
+  void _on();
 };
 
 extern WakeupLight wakeup;

@@ -4,6 +4,7 @@
 #include "mqtt.h"
 #include "config.h"
 #include "colorlight.h"
+#include "wakeup.h"
 
 WiFiClient mqttClient;
 PubSubClient mqtt(MQTT_HOST, MQTT_PORT, mqttCallback, mqttClient);
@@ -71,6 +72,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
 
   if (strcmp(topic, MQTT_PREFIX "a/colorlight") == 0) {
     colorLightReceive(value);
+  } else if (strcmp(topic, MQTT_PREFIX "a/wakeup") == 0) {
+    wakeup.recvState(value);
   } else {
     log(String("unknown actuator: ") + topic);
   }
