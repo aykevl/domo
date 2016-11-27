@@ -122,6 +122,7 @@ float WakeupLight::currentBrightness() {
       float y = (pow(2.0, x*8.0) - 1.0) / 255.0;
       if (y > 1.0) {
         state = LIGHT_ON;
+        sendState();
         return 1.0;
       }
       return y;
