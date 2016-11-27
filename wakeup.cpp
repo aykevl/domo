@@ -63,7 +63,14 @@ void WakeupLight::loop() {
     }
   }
   wasInWakeup = nowInWakeup;
-  analogWrite(pin, ceil(currentBrightness()*1023.0));
+  float brightness = currentBrightness();
+  if (brightness >= 1.0) {
+    digitalWrite(pin, HIGH);
+  } else if (brightness <= 0.0) {
+    digitalWrite(pin, LOW);
+  } else {
+    analogWrite(pin, ceil(brightness*1023.0));
+  }
 }
 
 void WakeupLight::off() {
