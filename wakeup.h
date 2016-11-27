@@ -8,10 +8,9 @@
 typedef enum {
   LIGHT_UNDEFINED,
   LIGHT_OFF,
-  LIGHT_WAKE,      // in minutes
-  LIGHT_FASTSTART, // in seconds
+  LIGHT_SWITCH,
+  LIGHT_WAKE,
   LIGHT_ON,
-  LIGHT_STOP,      // in seconds
 } lightState_t;
 
 // Transition times in ms
@@ -20,6 +19,7 @@ const float LIGHT_TIME_FADE = 500.0;
 class WakeupLight {
   uint8_t pin;
   lightState_t state;
+  lightState_t nextState;
   unsigned long transitionStart;
   bool wasInWakeup;
   Time time;

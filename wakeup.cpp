@@ -73,7 +73,8 @@ void WakeupLight::off() {
 
 void WakeupLight::_off() {
   float y = currentBrightness();
-  state = LIGHT_STOP;
+  state = LIGHT_SWITCH;
+  nextState = LIGHT_OFF;
   transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
   loop();
 }
@@ -84,11 +85,10 @@ void WakeupLight::wake() {
 }
 
 void WakeupLight::_wake() {
-  // We could also start from the current brightness:
-  //float y = currentBrightness();
-  //float x = log((y * 255.0) + 1.0) / log(2) / 8.0; // inverse of LIGHT_WAKE case in currentBrightness
-  state = LIGHT_WAKE;
-  transitionStart = millis(); // - x*duration;
+  float y = currentBrightness();
+  state = LIGHT_SWITCH;
+  nextState = LIGHT_WAKE;
+  transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
   loop();
 }
 
@@ -99,21 +99,17 @@ void WakeupLight::on() {
 
 void WakeupLight::_on() {
   float y = currentBrightness();
-  state = LIGHT_FASTSTART;
+  state = LIGHT_SWITCH;
+  nextState = LIGHT_ON;
   transitionStart = millis() - y*LIGHT_TIME_FADE;
   loop();
 }
 
 lightState_t WakeupLight::currentState() {
-  switch (state) {
-    case LIGHT_WAKE:
-      return LIGHT_WAKE;
-    case LIGHT_FASTSTART:
-    case LIGHT_ON:
-      return LIGHT_ON;
-    case LIGHT_STOP:
-    case LIGHT_OFF:
-      return LIGHT_OFF;
+  if (state == LIGHT_SWITCH) {
+    return nextState;
+  } else {
+    return state;
   }
 }
 
@@ -130,26 +126,26 @@ float WakeupLight::currentBrightness() {
       }
       return y;
     }
-    case LIGHT_FASTSTART: {
-      float y = (float)(millis() - transitionStart) / LIGHT_TIME_FADE;
-      if (y > 1.0) {
-        state = LIGHT_ON;
-        return 1.0;
-      }
-      return y;
-    }
     case LIGHT_ON:
       return 1.0;
-    case LIGHT_STOP: {
-      float y = 1.0 - (float)(millis() - transitionStart) / LIGHT_TIME_FADE;
-      if (y < 0.0) {
-        state = LIGHT_OFF;
-        return 0.0;
+    case LIGHT_SWITCH: {
+      // Formula for turn-on transition
+      float y = (float)(millis() - transitionStart) / LIGHT_TIME_FADE;
+      if (y >= 1.0) {
+        state = nextState;
+        return currentBrightness();
       }
-      return y;
+      switch (nextState) {
+        case LIGHT_OFF:
+        case LIGHT_WAKE:
+          return 1.0 - y;
+        case LIGHT_ON:
+          return y;
+      }
     }
   }
 }
+
 bool WakeupLight::inWakeup() {
   uint32_t now = Clock.timestamp();
   if (now == 0) {
