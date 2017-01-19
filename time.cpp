@@ -136,7 +136,9 @@ void ClockClass::loop() {
     lastCheck = millis();
 
     // This blocks
+#ifdef SERIAL_ENABLED
     Serial.println("Clock: requesting time...");
+#endif
     http.begin(TIME_URL, TIME_FINGERPRINT);
 
     int httpCode = http.GET();
@@ -145,12 +147,18 @@ void ClockClass::loop() {
       // TODO: parse as 64-bit integer, and parse fractional part
       lastUnixMillis = (uint64_t)payload.toInt() * 1000;
       millisAtUnixTime = millis();
+#ifdef SERIAL_ENABLED
       Serial.print("Clock: timestamp=");
       Serial.println((uint32_t)timestamp());
+#endif
     } else if (httpCode < 0) {
+#ifdef SERIAL_ENABLED
       Serial.printf("Clock: GET failed: %s\n", http.errorToString(httpCode).c_str());
+#endif
     } else {
+#ifdef SERIAL_ENABLED
       Serial.printf("Clock: GET unknown HTTP code: %d\n", httpCode);
+#endif
     }
   }
 }

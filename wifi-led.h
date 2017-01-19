@@ -45,14 +45,20 @@ class WifiLedClass {
           case STATE_CONNECTING:
             // It looks like this doesn't actually work.
             ledBlinkStart = millis();
+#ifdef SERIAL_ENABLED
             Serial.println("Connecting...");
+#endif
             break;
           case STATE_CONNECTED:
+#ifdef SERIAL_ENABLED
             Serial.print("Connected with IP address: ");
             Serial.println(WiFi.localIP());
+#endif
             break;
           case STATE_DISCONNECTED:
+#ifdef SERIAL_ENABLED
             Serial.println("Disconnected.");
+#endif
             break;
         }
       }

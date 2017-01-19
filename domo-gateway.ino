@@ -19,14 +19,18 @@ const uint8_t BUTTON_PIN = D1;
 HTSensor htsensor;
 #include "server.h"
 
+//#define SERIAL_ENABLED
+
 Button button(BUTTON_PIN);
 
 void setup() {
   analogWriteFreq(300);
   analogWriteRange(1023);
 
+#ifdef SERIAL_ENABLED
   Serial.begin(115200);
   Serial.println(F("ESP8266 begin"));
+#endif
 
   Settings.begin();
   wakeup.begin(WAKEUP_PIN);
@@ -35,7 +39,9 @@ void setup() {
   wifi.setup();
   serverSetup();
   radioSetup();
+#ifdef SERIAL_ENABLED
   Serial.println(F("ESP8266 setup complete"));
+#endif
 }
 
 void loop() {

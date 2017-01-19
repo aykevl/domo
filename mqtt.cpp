@@ -16,7 +16,9 @@ bool mqttWasConnected = false;
 uint32_t mqttLastTry = 0;
 
 void log(String line) {
+#ifdef SERIAL_ENABLED
   Serial.println(line);
+#endif
 #ifdef MQTT_LOG
   line = String(F(CLIENT_ID ": ")) + line;
   mqtt.publish(MQTT_LOG, line.c_str());
@@ -43,7 +45,9 @@ void mqttLoop() {
 void mqttCallback(char *topic, byte *payload, unsigned int length) {
   if (length < 1) {
     // Odd packet
+#ifdef SERIAL_ENABLED
     Serial.println("MQTT: got zero-length payload");
+#endif
     return;
   }
 
