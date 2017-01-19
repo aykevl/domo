@@ -2,12 +2,12 @@
 const char asset_date[] PROGMEM = __TIMESTAMP__ " GMT";
 
 const char asset_html_root[] PROGMEM = R"=====(
-<!DOCTYPE HTML>
-<title>Wakeup</title>
+<!DOCTYPE html>
+<title>Gateway</title>
 <meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="style.css"/>
 
-<h1>Wakeup</h1>
+<h1>Gateway</h1>
 
 <table class="table-borders">
   <tr>
@@ -64,11 +64,11 @@ const char asset_html_root[] PROGMEM = R"=====(
 
 const char asset_html_login[] PROGMEM = R"=====(
 <!DOCTYPE HTML>
-<title>Wakeup</title>
+<title>Gateway</title>
 <meta name="viewport" content="width=device-width">
 <link rel="stylesheet" href="style.css"/>
 
-<h1>Wakeup</h1>
+<h1>Gateway</h1>
 
 <form method="POST" action="./login" style="text-align: center;">
   <!-- Fake username field for Chrome -->
