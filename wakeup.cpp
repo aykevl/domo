@@ -17,6 +17,8 @@ void WakeupLight::begin(uint8_t pin) {
   time.setHour(Settings.data.wake_hour);
   time.setMinute(Settings.data.wake_minute);
   duration = Settings.data.wake_duration * 60000;
+  enabled = Settings.data.wake_enabled;
+  fullBrightness = Settings.data.wake_fullBrightness;
 
   pinMode(pin, OUTPUT);
   digitalWrite(pin, 0);
@@ -54,16 +56,20 @@ void WakeupLight::setWakeup(int32_t dayTime, int32_t duration) {
 }
 
 void WakeupLight::loop() {
-  bool nowInWakeup = inWakeup();
-  if (!wasInWakeup && nowInWakeup) {
-    // transition into wakeup
-    if (state == LIGHT_OFF) {
-      Serial.println("Light: Time to wake up!");
-      wake();
+  if (enabled) {
+    bool nowInWakeup = inWakeup();
+    if (!wasInWakeup && nowInWakeup) {
+      // transition into wakeup
+      if (state == LIGHT_OFF) {
+        log("WakeupLight: Time to wake up!");
+        wake();
+      }
     }
+    wasInWakeup = nowInWakeup;
   }
-  wasInWakeup = nowInWakeup;
-  float brightness = currentBrightness();
+
+  // TODO: make fullBrightness logarithmic.
+  float brightness = currentBrightness() * fullBrightness;
   if (brightness >= 1.0) {
     digitalWrite(pin, HIGH);
   } else if (brightness <= 0.0) {
@@ -160,9 +166,13 @@ bool WakeupLight::inWakeup() {
     // Clock is not yet initialized.
     return false;
   }
-  uint32_t ts_now = Time(now).dayTime(); // seconds in this day (including TZ)
+  uint32_t ts_now = Time(now).dayTime();
   uint32_t ts_wake = time.dayTime();
-  return ts_now >= ts_wake && ts_now <= ts_wake+(duration/1000);
+  static uint32_t lastCheck = 0;
+  if (lastCheck == 0 || lastCheck + 60 < now) {
+      lastCheck = now;
+  }
+  return (ts_wake - ts_now + 86400) % 86400 < (duration/1000);
 }
 
 void WakeupLight::sendState() {
@@ -184,9 +194,11 @@ void WakeupLight::sendState() {
   }
   values["time"] = time.dayTime();
   values["duration"] = duration / 1000.0;
+  values["enabled"] = enabled;
+  values["fullBrightness"] = fullBrightness;
   values["switchDuration"] = LIGHT_TIME_FADE / 1000.0;
 
-  const size_t messageMaxLen = 128;
+  const size_t messageMaxLen = 192; // ~135
   uint8_t message[messageMaxLen];
   size_t messageLen = root.printTo((char*)message, messageMaxLen);
 
@@ -223,6 +235,8 @@ void WakeupLight::recvState(JsonObject &value) {
 
   uint32_t newDuration = (uint32_t)value["duration"] / 60;
   uint32_t newTime = value["time"];
-
   setWakeup(newTime, newDuration);
+
+  enabled = value["enabled"];
+  fullBrightness = value["fullBrightness"];
 }

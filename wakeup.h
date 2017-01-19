@@ -24,6 +24,8 @@ class WakeupLight {
   bool wasInWakeup;
   Time time;
   uint32_t duration;
+  bool enabled;
+  float fullBrightness;
 
 public:
   void begin(uint8_t pin);

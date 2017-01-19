@@ -25,7 +25,7 @@ const char asset_html_root[] PROGMEM = R"=====(
             <td>:wakeup_state: – :wkp</td>
           </tr>
           <tr>
-            <td>Start time:</td>
+            <td>End time:</td>
             <td>
               <span class="input-time">
                 <input type="number" name="wakeup-hour" value=":H" min="0" max="23">:<input type="number" name="wakeup-minute" value=":M" min="0" max="59">

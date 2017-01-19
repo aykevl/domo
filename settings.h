@@ -9,6 +9,8 @@ typedef struct {
   uint8_t wake_hour;
   uint8_t wake_minute;
   uint8_t wake_duration;
+  float   wake_fullBrightness;
+  bool    wake_enabled;
 } SettingsData;
 
 const uint8_t SETTINGS_VERSION = 1;
@@ -29,6 +31,8 @@ class SettingsClass {
       data.wake_hour = 7;
       data.wake_minute = 15;
       data.wake_duration = 30;
+      data.wake_fullBrightness = 1.0;
+      data.wake_enabled = false;
     }
 
     void save() {
