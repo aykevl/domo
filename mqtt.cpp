@@ -9,7 +9,7 @@
 WiFiClient mqttClient;
 PubSubClient mqtt(MQTT_HOST, MQTT_PORT, mqttCallback, mqttClient);
 
-const char *MQTT_MSG_ONLINE = "online";
+const char *MQTT_MSG_ONLINE = "online version: " __DATE__ " " __TIME__;
 const char *MQTT_MSG_OFFLINE = "offline";
 
 bool mqttWasConnected = false;
