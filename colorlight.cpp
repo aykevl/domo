@@ -46,7 +46,7 @@ void colorLightSend(uint8_t *arg) {
       values["mode"] = "!unreachable";
       break;
   }
-  values.set("disabled",   (bool)(arg[0] & COLOR_FLAG_DISABLED));
+  values.set("enabled",    !(bool)(arg[0] & COLOR_FLAG_DISABLED));
   values.set("looping",    (bool)(arg[0] & COLOR_FLAG_LOOPING));
   values.set("reverse",    (bool)(arg[0] & COLOR_FLAG_REVERSE));
   values.set("time",       (ufloat8_dec(arg[1]) << 8) / 1000.0);
@@ -80,7 +80,7 @@ void colorLightReceive(JsonObject &value) {
   } else {
     msg[0] = COLOR_MODE_UNDEFINED;
   }
-  if (value["disabled"]) {
+  if (!value["enabled"]) {
     msg[0] |= COLOR_FLAG_DISABLED;
   }
   if (value["looping"]) {
