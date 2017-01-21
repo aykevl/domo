@@ -15,13 +15,10 @@ const char CONTENT_TYPE_HTML[] PROGMEM = "text/html; charset=utf-8";
 const char CONTENT_TYPE_CSS[] PROGMEM = "text/css";
 
 void handleLogin() {
-  WifiLed.busy();
-
   if (server.method() == HTTP_POST && server.hasArg(F("password"))) {
     if (httpSessionLogin(server)) {
       server.sendHeader(F("Location"), F("."));
       server.send(303, NULL);
-      WifiLed.done();
       return;
     }
   }
@@ -29,24 +26,19 @@ void handleLogin() {
   if (httpSessionIsAuthenticated(server)) {
     server.sendHeader(F("Location"), F("."));
     server.send(303, NULL);
-    WifiLed.done();
     return;
   }
 
   // Not logged in - show login page.
   server.send(200, FPSTR(CONTENT_TYPE_HTML), FPSTR(asset_html_login));
-
-  WifiLed.done();
 }
 
 void handleRoot() {
-  WifiLed.busy();
   int freeHeapInt = ESP.getFreeHeap();
 
   if (!httpSessionIsAuthenticated(server)) {
     server.sendHeader(F("Location"), F("./login"));
     server.send(303, NULL);
-    WifiLed.done();
     return;
   }
 
@@ -70,7 +62,6 @@ void handleRoot() {
 
     server.sendHeader(F("Location"), F("."));
     server.send(303, NULL);
-    WifiLed.done();
     return;
   }
 
@@ -122,12 +113,9 @@ void handleRoot() {
   root.replace(F(":*H:"), String(htsensor.getHumidity(), 1));
 
   server.send(200, FPSTR(CONTENT_TYPE_HTML), root);
-
-  WifiLed.done();
 }
 
 void handleNotFound() {
-  WifiLed.busy();
   String message = F("File Not Found\n\n");
   message += F("URI: ");
   message += server.uri();
@@ -140,7 +128,6 @@ void handleNotFound() {
     message += ' ' + server.argName(i) + F(": ") + server.arg(i) + '\n';
   }
   server.send(404, FPSTR(CONTENT_TYPE_PLAIN), message);
-  WifiLed.done();
 }
 
 void serverSetup() {
@@ -151,7 +138,6 @@ void serverSetup() {
   server.on("/", handleRoot);
   server.on("/login", handleLogin);
   server.on("/style.css", []() {
-    WifiLed.busy();
     server.sendHeader(F("Cache-Control"), F("public,max-age=3600")); // 1 hour
     // Send the mtime of the source file as the Last-Modified date.
     // This Last-Modified date (in __TIMESTAMP__) is in the ANSI C
@@ -159,7 +145,6 @@ void serverSetup() {
     // Reference: https://tools.ietf.org/html/rfc7231#section-7.1.1.1
     server.sendHeader(F("Last-Modified"), FPSTR(asset_date));
     server.send(200, FPSTR(CONTENT_TYPE_CSS), FPSTR(asset_css));
-    WifiLed.done();
   });
   server.onNotFound(handleNotFound);
   server.begin();

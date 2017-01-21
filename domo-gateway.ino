@@ -11,7 +11,6 @@ const uint8_t BUTTON_PIN = D1;
 #include "settings.h"
 #include "mqtt.h"
 #include "wifi.h"
-#include "wifi-led.h"
 #include "time.h"
 #include "button.h"
 #include "wakeup.h"
@@ -34,7 +33,6 @@ void setup() {
 
   Settings.begin();
   wakeup.begin(WAKEUP_PIN);
-  WifiLed.begin(D2); // D4 is the onboard LED of the ESP-12E
   htsensor.setup();
   wifi.setup();
   serverSetup();
@@ -46,7 +44,6 @@ void setup() {
 
 void loop() {
   wifi.loop();
-  WifiLed.loop();
   Clock.loop();
   htsensor.loop();
   serverLoop();
