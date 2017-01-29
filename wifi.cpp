@@ -11,6 +11,7 @@
 WiFiClass wifi;
 
 void WiFiClass::setup() {
+  WiFi.mode(WIFI_STA);
   WiFi.begin(SSID, PASSWORD);
 }
 
