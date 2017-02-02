@@ -7,6 +7,7 @@
 #include "ufloat8.h"
 #include "colorlight.h"
 #include "light.h"
+#include "htsensor.h"
 
 const uint8_t RADIO_MSG_REQUEST = 0x80;
 
@@ -35,8 +36,7 @@ void radioLoop() {
     uint8_t *arg = msg+2;            // the rest of the data (30 bytes) is the argument
     log("got radio message");
 
-    if (request) {
-    } else {
+    if (!request) {
       switch (command) {
         case RADIO_MSG_COLOR:
           colorLightSend(arg);
@@ -45,6 +45,9 @@ void radioLoop() {
           if (child > 0 && child < CHILDREN_LEN) {
             lightSend(CHILDREN[child], arg);
           }
+          break;
+        case RADIO_MSG_HT:
+          htsensorSend(arg);
           break;
       }
     }

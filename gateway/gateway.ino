@@ -10,7 +10,6 @@
 #include "wifi.h"
 #include "time.h"
 #include "htsensor.h"
-HTSensor htsensor;
 #include "server.h"
 
 void setup() {
@@ -20,7 +19,6 @@ void setup() {
 #endif
 
   Settings.begin();
-  htsensor.setup();
   radioSetup();
   wifi.setup();
   serverSetup();
@@ -32,7 +30,6 @@ void setup() {
 void loop() {
   wifi.loop();
   Clock.loop();
-  htsensor.loop();
   serverLoop();
   radioLoop();
   ArduinoOTA.handle();

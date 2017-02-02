@@ -60,9 +60,6 @@ void handleRoot() {
   Time t = Time(now);
   root.replace(F(":time________:"), t.format());
 
-  root.replace(F(":*T:"), String(htsensor.getTemperature(), 1));
-  root.replace(F(":*H:"), String(htsensor.getHumidity(), 1));
-
   server.send(200, FPSTR(CONTENT_TYPE_HTML), root);
 }
 

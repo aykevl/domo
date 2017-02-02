@@ -1,8 +1,8 @@
 
-#include <EEPROM.h>
 #include "settings.h"
 #include "light.h"
 #include "button.h"
+#include "htsensor.h"
 
 Light light1;
 Light light2;
@@ -15,6 +15,7 @@ void setup() {
   light1.begin(5, 1, &Settings.data.light1);
   light2.begin(6, 2, &Settings.data.light2);
   radioSetup();
+  htsensorSetup();
 }
 
 void loop() {
@@ -22,6 +23,7 @@ void loop() {
   light1.loop();
   light2.loop();
   button.loop();
+  htsensorLoop();
 
   static bool buttonWasPressed = false;
   bool buttonPressed = button.pressed();
