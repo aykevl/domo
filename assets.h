@@ -41,7 +41,7 @@ const char asset_html_login[] PROGMEM = R"=====(
   <!-- Fake username field for Chrome -->
   <div style="display: none;"><input type="text" name="username"></div>
   <b>Password:</b>
-  <input type="password" name="password">
+  <input type="password" name="password" autofocus>
   <input type="submit" value="Login">
 </form>
 )=====";
