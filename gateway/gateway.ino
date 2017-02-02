@@ -11,6 +11,7 @@
 #include "time.h"
 #include "htsensor.h"
 #include "server.h"
+#include "amplifier.h"
 
 void setup() {
 #ifdef SERIAL_ENABLED
@@ -19,6 +20,7 @@ void setup() {
 #endif
 
   Settings.begin();
+  amplifierSetup();
   radioSetup();
   wifi.setup();
   serverSetup();
@@ -32,5 +34,6 @@ void loop() {
   Clock.loop();
   serverLoop();
   radioLoop();
+  amplifierLoop();
   ArduinoOTA.handle();
 }

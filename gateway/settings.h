@@ -6,14 +6,10 @@
 typedef struct {
   uint8_t version;
   uint8_t size;
-  uint8_t wake_hour;
-  uint8_t wake_minute;
-  uint8_t wake_duration;
-  float   wake_fullBrightness;
-  bool    wake_enabled;
+  uint8_t amp_volume;
 } SettingsData;
 
-const uint8_t SETTINGS_VERSION = 1;
+const uint8_t SETTINGS_VERSION = 2;
 
 class SettingsClass {
 
@@ -28,11 +24,7 @@ class SettingsClass {
     void reset() {
       data.version = SETTINGS_VERSION;
       data.size = sizeof(SettingsData);
-      data.wake_hour = 7;
-      data.wake_minute = 15;
-      data.wake_duration = 30;
-      data.wake_fullBrightness = 1.0;
-      data.wake_enabled = false;
+      data.amp_volume = 40; // default volume of MAX9744 (datasheet p. 16)
     }
 
     void save() {
