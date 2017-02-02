@@ -1,7 +1,7 @@
 
 #include <ArduinoJson.h>
+#include <DHT.h>
 
-#include "DHT.h"
 #include "mqtt.h"
 
 const uint8_t HT_PIN = D3;
