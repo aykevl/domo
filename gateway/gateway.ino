@@ -13,11 +13,9 @@
 HTSensor htsensor;
 #include "server.h"
 
-//#define SERIAL_ENABLED
-
 void setup() {
 #ifdef SERIAL_ENABLED
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println(F("ESP8266 begin"));
 #endif
 

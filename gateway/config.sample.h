@@ -17,3 +17,5 @@
 // 32 random bits to use as the start address of the RF24.
 #define RF24_ADDRESS 0x00000000
 #define RF24_CHANNEL 71
+
+#define SERIAL_ENABLED 1
