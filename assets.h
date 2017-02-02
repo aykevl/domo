@@ -11,39 +11,6 @@ const char asset_html_root[] PROGMEM = R"=====(
 
 <table class="table-borders">
   <tr>
-    <th>Wakeup</th>
-    <td>
-      <form method="POST" action="">
-        <input type="submit" name="off" value="Off">
-        <input type="submit" name="wake" value="Wake">
-        <input type="submit" name="on" value="On">
-      </form>
-      <form method="POST" action="">
-        <table>
-          <tr>
-            <td>State:</td>
-            <td>:wakeup_state: – :wkp</td>
-          </tr>
-          <tr>
-            <td>End time:</td>
-            <td>
-              <span class="input-time">
-                <input type="number" name="wakeup-hour" value=":H" min="0" max="23">:<input type="number" name="wakeup-minute" value=":M" min="0" max="59">
-              </span>
-            </td>
-          </tr>
-          <tr>
-            <td>Duration:</td>
-            <td>
-              <input type="number" name="wakeup-duration" value=":D" min="0" max="60" style="width: 2em">
-            </td>
-          </tr>
-        </table>
-        <input type=submit value="Change"/>
-      </form>
-    </td>
-  </tr>
-  <tr>
     <th>Current time</th>
     <td>:time________: (:unixtime:)</td>
   </tr>
@@ -109,21 +76,5 @@ table.table-borders > tbody > tr > td {
 }
 table.table-borders > tbody > tr:not(:first-child) {
   border-top: #ddd 2px dotted;
-}
-.input-time {
-  border: 1px solid gray;
-  white-space: nowrap;
-}
-input[type=number] {
-  border: 1px solid gray;
-  background: inherit;
-  font-size: inherit;
-  padding: 2px;
-}
-.input-time input[type=number] {
-  width: 2em;
-  border: none;
-  text-align: right;
-  margin: 0;
 }
 )=====";

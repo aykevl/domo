@@ -65,40 +65,44 @@ void colorLightSend(uint8_t *arg) {
 }
 
 void colorLightReceive(JsonObject &value) {
-  uint8_t msg[8];
+  uint8_t msg[10];
+  msg[0] = RADIO_MSG_COLOR;
+  msg[1] = 0; // first child
+  uint8_t *arg = msg+2;
+
   const char *mode = value["mode"];
   if (mode == NULL) {
     log(F("colorlight: no 'mode' key"));
     return;
   }
   if (strcmp(mode, "rgb") == 0) {
-    msg[0] = COLOR_MODE_RGB;
+    arg[0] = COLOR_MODE_RGB;
   } else if (strcmp(mode, "hsv") == 0) {
-    msg[0] = COLOR_MODE_HSV;
+    arg[0] = COLOR_MODE_HSV;
   } else if (strcmp(mode, "hsv-max") == 0) {
-    msg[0] = COLOR_MODE_HSV_MAX;
+    arg[0] = COLOR_MODE_HSV_MAX;
   } else {
-    msg[0] = COLOR_MODE_UNDEFINED;
+    arg[0] = COLOR_MODE_UNDEFINED;
   }
   if (!value["enabled"]) {
-    msg[0] |= COLOR_FLAG_DISABLED;
+    arg[0] |= COLOR_FLAG_DISABLED;
   }
   if (value["looping"]) {
-    msg[0] |= COLOR_FLAG_LOOPING;
+    arg[0] |= COLOR_FLAG_LOOPING;
   }
   if (value["reverse"]) {
-    msg[0] |= COLOR_FLAG_REVERSE;
+    arg[0] |= COLOR_FLAG_REVERSE;
   }
   float time = value["time"];
-  msg[1] = ufloat8_enc((uint32_t)(time * 1000.0) >> 8);
-  msg[2] = (float)value["hue"]        * 255.499;
-  msg[3] = (float)value["saturation"] * 255.499;
-  msg[4] = (float)value["value"]      * 255.499;
-  msg[5] = (float)value["red"]        * 255.499;
-  msg[6] = (float)value["green"]      * 255.499;
-  msg[7] = (float)value["blue"]       * 255.499;
+  arg[1] = ufloat8_enc((uint32_t)(time * 1000.0) >> 8);
+  arg[2] = (float)value["hue"]        * 255.499;
+  arg[3] = (float)value["saturation"] * 255.499;
+  arg[4] = (float)value["value"]      * 255.499;
+  arg[5] = (float)value["red"]        * 255.499;
+  arg[6] = (float)value["green"]      * 255.499;
+  arg[7] = (float)value["blue"]       * 255.499;
 
-  if (!radioSend(RADIO_MSG_COLOR, msg, 8)) {
+  if (!radioSend(msg, sizeof(msg))) {
     log(F("couldn't sent light update"));
   }
 }

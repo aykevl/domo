@@ -6,8 +6,12 @@
 #include "config.h"
 #include "ufloat8.h"
 #include "colorlight.h"
+#include "light.h"
 
 const uint8_t RADIO_MSG_REQUEST = 0x80;
+
+const uint8_t CHILDREN_LEN = 3;
+const char *CHILDREN[CHILDREN_LEN] = {NULL, "wakeup", "readinglight"};
 
 RF24 radio(D4, D8);
 
@@ -15,7 +19,7 @@ void radioSetup() {
   radio.begin();
   radio.setPALevel(RF24_PA_LOW);
   radio.openReadingPipe(1, (const uint8_t*) "\x00" RF24_ADDRESS);
-  radio.openWritingPipe((const uint8_t*) "\x01" RF24_ADDRESS);
+  radio.openWritingPipe((const uint8_t*) "\x02" RF24_ADDRESS);
   radio.setChannel(RF24_CHANNEL);
   radio.startListening();
 }
@@ -27,48 +31,60 @@ void radioLoop() {
 
     bool request = msg[0] >> 7;      // take the most significant bit (as 0 or 1)
     uint8_t command = msg[0] & 0x7f; // take all other bits
-    uint8_t *arg = msg+1;            // the rest of the data (31 bytes) is the argument
+    uint8_t child = msg[1];
+    uint8_t *arg = msg+2;            // the rest of the data (30 bytes) is the argument
+    log("got radio message");
 
     if (request) {
     } else {
-      if (command == RADIO_MSG_COLOR) {
-        colorLightSend(arg);
+      switch (command) {
+        case RADIO_MSG_COLOR:
+          colorLightSend(arg);
+          break;
+        case RADIO_MSG_LIGHT:
+          if (child > 0 && child < CHILDREN_LEN) {
+            lightSend(CHILDREN[child], arg);
+          }
+          break;
       }
     }
   }
 
-  // Request the current color once per minute.
-  static uint32_t lastMillis = 0;
-  uint32_t currentMillis = millis();
-  if (lastMillis == 0 || currentMillis - lastMillis >= 60000) {
-    lastMillis = currentMillis;
+  if (mqtt.connected()) {
+    static uint16_t stage = 1; // 1, 2, 3, ...
+    if (stage <= 2) {
+      // stage 1 and 2 follows
 
-    uint8_t msg[32];
-    memset(msg, 0, 32);
-    msg[0] = RADIO_MSG_COLOR | RADIO_MSG_REQUEST;
+      static uint32_t startMillis = 0;
+      if (startMillis == 0) {
+        startMillis = millis();
+      }
 
-    radio.stopListening();
-    if (!radio.write(msg, 32)) {
-      log(F("failed to send color request message"));
+      uint32_t elapsed = millis() - startMillis;
+      if (elapsed > stage*100) { // do one stage per 100ms
+        uint8_t msg[32];
+        memset(msg, 0, 32);
+        msg[0] = RADIO_MSG_LIGHT | RADIO_MSG_REQUEST;
+        msg[1] = stage;
+        log(String("requesting child ") + msg[1]);
+
+        radio.stopListening();
+        if (!radio.write(msg, 32)) {
+          log(F("failed to send color request message"));
+        }
+        radio.startListening();
+
+        // Next stage.
+        stage++;
+      }
     }
-    radio.startListening();
   }
 }
 
-bool radioSend(uint8_t messageType, uint8_t *data, size_t length) {
-  if (length > 31) {
-    // Message too big.
-    return false;
-  }
-
-  // Create the message.
-  uint8_t msg[32];
-  msg[0] = messageType;
-  memcpy(msg+1, data, length);
-
+bool radioSend(uint8_t *msg, size_t length) {
   // Send the message via the nRF24L01.
   radio.stopListening();
-  bool success = radio.write(msg, 1+length);
+  bool success = radio.write(msg, length);
   radio.startListening();
 
   return success;
