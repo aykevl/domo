@@ -65,17 +65,14 @@ void radioLoop() {
 
       uint32_t elapsed = millis() - startMillis;
       if (elapsed > stage*100) { // do one stage per 100ms
-        uint8_t msg[32];
-        memset(msg, 0, 32);
+        uint8_t msg[2];
         msg[0] = RADIO_MSG_LIGHT | RADIO_MSG_REQUEST;
         msg[1] = stage;
         log(String("requesting child ") + msg[1]);
 
-        radio.stopListening();
-        if (!radio.write(msg, 32)) {
-          log(F("failed to send color request message"));
+        if (!radioSend(msg, sizeof(msg))) {
+          log(F("failed to send request message"));
         }
-        radio.startListening();
 
         // Next stage.
         stage++;
