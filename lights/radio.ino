@@ -13,6 +13,10 @@ void radioSetup() {
   radio.openReadingPipe(1, (const uint8_t*) "\02" RF24_ADDRESS);
   radio.openWritingPipe((const uint8_t*) "\00" RF24_ADDRESS);
   radio.setChannel(RF24_CHANNEL);
+
+  light1.sendState();
+  light2.sendState();
+
   radio.startListening();
 }
 

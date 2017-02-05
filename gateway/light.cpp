@@ -30,7 +30,7 @@ void lightSend(const char *child, uint8_t *arg) {
   values["fullBrightness"] = arg[1] / 255.0;
   // ignore time
   values["time"] = Time(arg[6], arg[7], 0).dayTime(); // hour, minute, second
-  values["duration"] = float(arg[8]) * 256.0 + float(arg[9]);
+  values["duration"] = (float(arg[8]) + float(arg[9]) * 256.0) * 60.0;
 
   const size_t messageMaxLen = 192; // ~135 TODO
   uint8_t message[messageMaxLen];
@@ -79,9 +79,9 @@ void lightReceive(uint8_t child, JsonObject &value) {
   Time time = Time(uint32_t(value["time"]));
   arg[6] = time.getHour();
   arg[7] = time.getMinute();
-  uint32_t duration = (uint32_t)value["duration"] / 60;
-  arg[8] = duration / 256;
-  arg[9] = duration % 256;
+  uint32_t duration = uint32_t(float(value["duration"])) / 60;
+  arg[8] = duration % 256;
+  arg[9] = duration / 256;
 
   if (!radioSend(msg, sizeof(msg))) {
     log(F("couldn't sent light update"));

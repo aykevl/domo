@@ -20,7 +20,7 @@ void Light::begin(uint8_t pin, uint8_t child, SettingsDataLight *settings) {
   digitalWrite(pin, HIGH);
 }
 
-void Light::setWakeup(int32_t hour, int32_t minute, int32_t duration) {
+void Light::setWakeup(int32_t hour, int32_t minute, int32_t duration, bool enabled) {
   if (time.setHour(hour)) {
     settings->hour = hour;
   }
@@ -33,6 +33,8 @@ void Light::setWakeup(int32_t hour, int32_t minute, int32_t duration) {
     this->duration = duration * 60000;
     settings->duration = duration;
   }
+
+  settings->enabled = enabled;
 
   Settings.save();
 }
@@ -178,7 +180,6 @@ bool Light::inWakeup() {
 
 void Light::sendState() {
   uint8_t msg[12];
-  memset(msg, 0, sizeof(msg));
   msg[0] = RADIO_MSG_LIGHT;
   msg[1] = child;
   uint8_t *arg = msg+2;
@@ -194,8 +195,9 @@ void Light::sendState() {
   }
   arg[6] = time.getHour();
   arg[7] = time.getMinute();
-  arg[8] = duration / 256;
-  arg[9] = duration * 256;
+  uint32_t dur = duration / 60000;
+  arg[8] = dur % 256; // modulo is unnecessary
+  arg[9] = dur / 256;
 
   if (!radioSend(msg, sizeof(msg))) {
     Serial.println(F("failed to send light message"));
@@ -204,7 +206,7 @@ void Light::sendState() {
 
 void Light::gotMessage(uint8_t *arg) {
   setState(lightState_t(arg[0] & LIGHT_FLAG_STATUS_MASK));
-  enabled = arg[0] & LIGHT_FLAG_ENABLED != 0;
+  bool enabled = (arg[0] & LIGHT_FLAG_ENABLED) != 0;
   fullBrightness = float(arg[1]) / 255.0;
   uint32_t timestamp = 0;
   for (uint8_t i=4; i; i--) { // handle 4 bytes (in little-endian format)
@@ -212,6 +214,6 @@ void Light::gotMessage(uint8_t *arg) {
     timestamp |= arg[2+(i-1)];
   }
   Clock.setTime(timestamp); // updated time
-  int32_t duration = int32_t(arg[8]) * 256 + arg[9];
-  setWakeup(arg[6], arg[7], duration); // hour, minute, duration
+  int32_t duration = int32_t(arg[8]) + int32_t(arg[9]) * 256;
+  setWakeup(arg[6], arg[7], duration, enabled); // hour, minute, duration (min)
 }

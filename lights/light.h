@@ -1,5 +1,6 @@
 
 #pragma once
+
 #include <Arduino.h>
 #include "time.h"
 #include "settings.h"
@@ -28,7 +29,7 @@ class Light {
   unsigned long transitionStart;
   bool wasInWakeup;
   Time time;
-  uint32_t duration;
+  uint32_t duration; // duration in ms
   bool enabled;
   float fullBrightness;
 
@@ -36,7 +37,7 @@ public:
   void begin(uint8_t pin, uint8_t child, SettingsDataLight *settings);
   Time getTime() { return time; }
   uint32_t getDuration() { return duration; }
-  void setWakeup(int32_t hour, int32_t minute, int32_t duration);
+  void setWakeup(int32_t hour, int32_t minute, int32_t duration, bool enabled);
   void loop();
   void setState(lightState_t newState);
   void off();
