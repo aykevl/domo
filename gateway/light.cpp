@@ -28,9 +28,8 @@ void lightSend(const char *child, uint8_t *arg) {
   }
   values["enabled"] = bool(arg[0] & LIGHT_FLAG_ENABLED);
   values["fullBrightness"] = arg[1] / 255.0;
-  // ignore time
-  values["time"] = Time(arg[6], arg[7], 0).dayTime(); // hour, minute, second
-  values["duration"] = (float(arg[8]) + float(arg[9]) * 256.0) * 60.0;
+  values["time"] = Time(arg[2], arg[3], 0).dayTime(); // hour, minute, second
+  values["duration"] = (int32_t(arg[4]) + int32_t(arg[5]) * 256) * 60;
 
   const size_t messageMaxLen = 192; // ~135 TODO
   uint8_t message[messageMaxLen];
@@ -52,7 +51,7 @@ void lightReceive(uint8_t child, JsonObject &value) {
   // 10-11: wakeup duration (dawn time)
 
   log("got light change");
-  uint8_t msg[12];
+  uint8_t msg[8];
   msg[0] = RADIO_MSG_LIGHT;
   msg[1] = child;
 
@@ -71,17 +70,12 @@ void lightReceive(uint8_t child, JsonObject &value) {
 
   arg[0] |= (value["enabled"]) ? LIGHT_FLAG_ENABLED : 0;
   arg[1] = uint8_t(float(value["fullBrightness"]) * 255.5);
-  uint32_t timestamp = Clock.timestamp(); // 4 bytes for the time, in little-endian format
-  for (uint8_t i=0; i<4; i++) {
-    arg[2+i] = uint8_t(timestamp);
-    timestamp >>= 8;
-  }
   Time time = Time(uint32_t(value["time"]));
-  arg[6] = time.getHour();
-  arg[7] = time.getMinute();
+  arg[2] = time.getHour();
+  arg[3] = time.getMinute();
   uint32_t duration = uint32_t(float(value["duration"])) / 60;
-  arg[8] = duration % 256;
-  arg[9] = duration / 256;
+  arg[4] = duration % 256;
+  arg[5] = duration / 256;
 
   if (!radioSend(msg, sizeof(msg))) {
     log(F("couldn't sent light update"));

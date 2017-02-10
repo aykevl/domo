@@ -9,8 +9,6 @@
 #include "light.h"
 #include "htsensor.h"
 
-const uint8_t RADIO_MSG_REQUEST = 0x80;
-
 const uint8_t CHILDREN_LEN = 3;
 const char *CHILDREN[CHILDREN_LEN] = {NULL, "wakeup", "readinglight"};
 
@@ -36,7 +34,13 @@ void radioLoop() {
     uint8_t *arg = msg+2;            // the rest of the data (30 bytes) is the argument
     log("got radio message");
 
-    if (!request) {
+    if (request) {
+      switch (command) {
+        case RADIO_MSG_TIME:
+          radioSendTime();
+          break;
+      }
+    } else {
       switch (command) {
         case RADIO_MSG_COLOR:
           colorLightSend(arg);
@@ -78,6 +82,33 @@ void radioLoop() {
         stage++;
       }
     }
+
+    static uint32_t lastMillis = 0;
+    uint32_t currentMillis = millis();
+    if (currentMillis - lastMillis > 300000) { // 5 minutes
+      lastMillis = currentMillis;
+      radioSendTime();
+    }
+  }
+}
+
+void radioSendTime() {
+  uint32_t timestamp = Clock.timestamp();
+  if (timestamp == 0) return;
+
+  // send current time
+  uint8_t msg[6];
+  msg[0] = RADIO_MSG_TIME;
+  msg[1] = 0;
+
+  // 4 bytes for the time, in little-endian format
+  for (uint8_t i=0; i<4; i++) {
+    msg[2+i] = uint8_t(timestamp);
+    timestamp >>= 8;
+  }
+
+  if (!radioSend(msg, sizeof(msg))) {
+    log(F("could not send time via radio"));
   }
 }
 

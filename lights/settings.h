@@ -1,6 +1,6 @@
 
 #pragma once
-#include "EEPROM.h"
+#include <EEPROM.h>
 
 typedef struct {
   uint8_t hour;

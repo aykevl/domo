@@ -171,15 +171,24 @@ bool Light::inWakeup() {
   }
   uint32_t ts_now = Time(now).dayTime();
   uint32_t ts_wake = time.dayTime();
-  static uint32_t lastCheck = 0;
-  if (lastCheck == 0 || lastCheck + 60 < now) {
-      lastCheck = now;
+
+  static uint32_t lastPrint = 0;
+  uint32_t currentMillis = millis();
+  if (child == 1 && currentMillis - lastPrint > 5000) {
+    lastPrint = currentMillis;
+    Serial.print("inWakeup ");
+    Serial.print(now);
+    Serial.print(' ');
+    Serial.print(ts_now);
+    Serial.print(' ');
+    Serial.println(ts_wake);
   }
+
   return (ts_wake - ts_now + 86400) % 86400 < (duration/1000);
 }
 
 void Light::sendState() {
-  uint8_t msg[12];
+  uint8_t msg[8];
   msg[0] = RADIO_MSG_LIGHT;
   msg[1] = child;
   uint8_t *arg = msg+2;
@@ -188,16 +197,11 @@ void Light::sendState() {
     arg[0] |= LIGHT_FLAG_ENABLED;
   }
   arg[1] = fullBrightness * 255 + 0.5;
-  uint32_t timestamp = Clock.timestamp();
-  for (uint8_t i=0; i<4; i++) { // not very useful to send the time...
-    arg[2+i] = uint8_t(timestamp);
-    timestamp >>= 8;
-  }
-  arg[6] = time.getHour();
-  arg[7] = time.getMinute();
+  arg[2] = time.getHour();
+  arg[3] = time.getMinute();
   uint32_t dur = duration / 60000;
-  arg[8] = dur % 256; // modulo is unnecessary
-  arg[9] = dur / 256;
+  arg[4] = dur % 256; // modulo is unnecessary
+  arg[5] = dur / 256;
 
   if (!radioSend(msg, sizeof(msg))) {
     Serial.println(F("failed to send light message"));
@@ -208,12 +212,6 @@ void Light::gotMessage(uint8_t *arg) {
   setState(lightState_t(arg[0] & LIGHT_FLAG_STATUS_MASK));
   bool enabled = (arg[0] & LIGHT_FLAG_ENABLED) != 0;
   fullBrightness = float(arg[1]) / 255.0;
-  uint32_t timestamp = 0;
-  for (uint8_t i=4; i; i--) { // handle 4 bytes (in little-endian format)
-    timestamp <<= 8;
-    timestamp |= arg[2+(i-1)];
-  }
-  Clock.setTime(timestamp); // updated time
-  int32_t duration = int32_t(arg[8]) + int32_t(arg[9]) * 256;
-  setWakeup(arg[6], arg[7], duration, enabled); // hour, minute, duration (min)
+  int32_t duration = int32_t(arg[4]) + int32_t(arg[5]) * 256;
+  setWakeup(arg[2], arg[3], duration, enabled); // hour, minute, duration (min)
 }

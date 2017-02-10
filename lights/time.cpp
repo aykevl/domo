@@ -84,21 +84,17 @@ uint32_t Date::timestamp(Time time) {
 }
 
 void ClockClass::setTime(uint32_t newTime) {
-  lastUnixMillis = newTime;
+  lastUnixSecs = newTime;
   millisAtUnixTime = millis();
-}
-
-uint64_t ClockClass::timestamp_ms() {
-  if (millisAtUnixTime == 0) {
-    return 0;
-  }
-  return lastUnixMillis + (uint64_t)(millis() - millisAtUnixTime);
 }
 
 // uint32_t Unix time will only roll over in the year 2109, so should
 // suffice.
 uint32_t ClockClass::timestamp() {
-  return timestamp_ms() / 1000;
+  if (lastUnixSecs == 0) {
+    return 0;
+  }
+  return lastUnixSecs + (millis() - millisAtUnixTime) / 1000;
 }
 
 Time ClockClass::UTCTime() {

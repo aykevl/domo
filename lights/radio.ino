@@ -22,6 +22,17 @@ void radioSetup() {
 
 void radioLoop() {
   if (!radio.available()) {
+
+    // Keep requesting the time every 5 seconds when it isn't yet known.
+    if (Clock.timestamp() == 0) {
+      static uint32_t lastRequest = 0;
+      uint32_t now = millis();
+      if (now - lastRequest > 5000) {
+        lastRequest = now;
+        radioRequestTime();
+      }
+    }
+
     return;
   }
   uint8_t msg[32];
@@ -43,14 +54,39 @@ void radioLoop() {
       }
     }
   } else {
-    if (command == RADIO_MSG_LIGHT) {
-      if (child == 1) {
-        light1.gotMessage(arg);
-      } else if (child == 2) {
-        light2.gotMessage(arg);
-      }
+    switch(command) {
+      case RADIO_MSG_LIGHT:
+        if (child == 1) {
+          light1.gotMessage(arg);
+        } else if (child == 2) {
+          light2.gotMessage(arg);
+        }
+        break;
+
+      case RADIO_MSG_TIME:
+        radioRecvTime(arg);
+        break;
     }
   }
+}
+
+void radioRequestTime() {
+  Serial.println("requesting time");
+  uint8_t msg[2];
+  msg[0] = RADIO_MSG_TIME | RADIO_MSG_REQUEST;
+  msg[1] = 0;
+  radioSend(msg, sizeof(msg));
+}
+
+void radioRecvTime(uint8_t *arg) {
+  uint32_t timestamp = 0;
+  for (uint8_t i=4; i; i--) { // handle 4 bytes (in little-endian format)
+    timestamp <<= 8;
+    timestamp |= arg[i-1];
+  }
+  Serial.print(F("time: "));
+  Serial.println(timestamp);
+  Clock.setTime(timestamp); // updated time
 }
 
 

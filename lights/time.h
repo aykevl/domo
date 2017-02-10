@@ -41,13 +41,12 @@ public:
 
 
 class ClockClass {
-  uint64_t lastUnixMillis = 0;
+  uint32_t lastUnixSecs = 0;
   uint32_t millisAtUnixTime = 0;
   uint32_t lastCheck = 0;
 
 public:
   void setTime(uint32_t timestamp);
-  uint64_t timestamp_ms();
   uint32_t timestamp();
   Time UTCTime();
   uint32_t nextTimestamp(Time nextTime);
