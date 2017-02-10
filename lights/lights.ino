@@ -3,10 +3,12 @@
 #include "light.h"
 #include "button.h"
 #include "htsensor.h"
+#include "ledstrip.h"
 
 Light light1;
 Light light2;
-Button button = Button(2);
+Button button(2);
+Ledstrip ledstrip(4, Button(3));
 
 void setup() {
   Serial.begin(9600); // Higher bitrates appear unreliable on the fake Chinese Nano
@@ -14,6 +16,7 @@ void setup() {
   Settings.begin();
   light1.begin(5, 1, &Settings.data.light1);
   light2.begin(6, 2, &Settings.data.light2);
+  ledstrip.begin();
   radioSetup();
   htsensorSetup();
 }
@@ -24,6 +27,7 @@ void loop() {
   light2.loop();
   button.loop();
   htsensorLoop();
+  ledstrip.loop();
 
   static bool buttonWasPressed = false;
   bool buttonPressed = button.pressed();
