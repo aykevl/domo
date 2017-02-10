@@ -1,6 +1,9 @@
 
 #pragma once
 
-void amplifierSetup();
+#include <ArduinoJson.h>
 
+void amplifierSetup();
 void amplifierLoop();
+void amplifierSendState();
+void amplifierRecvState(JsonObject &value);

@@ -5,6 +5,7 @@
 #include "config.h"
 #include "colorlight.h"
 #include "light.h"
+#include "amplifier.h"
 
 WiFiClient mqttClient;
 PubSubClient mqtt(MQTT_HOST, MQTT_PORT, mqttCallback, mqttClient);
@@ -37,6 +38,7 @@ void mqttLoop() {
         if (!mqtt.subscribe(MQTT_PREFIX "a/+", 1)) {
           log(F("failed to subscribe"));
         }
+        amplifierSendState();
       }
     }
   }
@@ -80,6 +82,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     lightReceive(1, value);
   } else if (strcmp(topic, MQTT_PREFIX "a/readinglight") == 0) {
     lightReceive(2, value);
+  } else if (strcmp(topic, MQTT_PREFIX "a/amplifier") == 0) {
+    amplifierRecvState(value);
   } else {
     log(String("unknown actuator: ") + topic);
   }

@@ -8,11 +8,19 @@
 
 #include "amplifier.h"
 #include "settings.h"
+#include "config.h"
 #include "rotary.h"
 #include "mqtt.h"
+#include "button.h"
 
 const uint8_t AMPLIFIER_EEPROM_ADDRESS = 4; // skip the first 4 bytes
 const unsigned long AMPLIFIER_EEPROM_TIMEOUT = 1000; // wait 1s before writing the volume
+const uint8_t AMPLIFIER_BUTTON_PIN = D1;
+const uint8_t AMPLIFIER_LED_PIN = D0;
+const uint8_t AMPLIFIER_SDA = D2;
+const uint8_t AMPLIFIER_SCL = D3;
+
+Button amplifierButton(AMPLIFIER_BUTTON_PIN);
 
 // 0x4b, address with both ADDR ports high (from the datasheet).
 #define AMPLIFIER_ADDRESS 0b1001011
@@ -25,6 +33,8 @@ bool amplifierMuted() {
 
 // private
 void amplifierWriteVolume() {
+  digitalWrite(AMPLIFIER_LED_PIN, !amplifierMuted());
+
   Wire.beginTransmission(AMPLIFIER_ADDRESS);
   if (amplifierMuted()) {
     Wire.write(0);
@@ -45,7 +55,9 @@ void amplifierMute(bool muted) {
   } else {
     amplifierVolume = amplifierVolume & ~0x80; // clear bit
   }
+  digitalWrite(AMPLIFIER_LED_PIN, !muted);
   amplifierWriteVolume();
+  amplifierSendState();
 }
 
 // Increase or decrease volume.
@@ -64,6 +76,7 @@ void amplifierChangeVolume(int8_t change) {
     newVolume = 0;
   }
   amplifierVolume = (uint8_t)newVolume;
+  amplifierSendState();
   amplifierWriteVolume();
 
   log(String("amp volume: ") + amplifierVolume);
@@ -71,14 +84,25 @@ void amplifierChangeVolume(int8_t change) {
 
 void amplifierSetup() {
   rotarySetup();
+  Wire.begin(AMPLIFIER_SDA, AMPLIFIER_SCL);
+  pinMode(AMPLIFIER_LED_PIN, OUTPUT);
+
+  // Initialize volume
   if (Settings.data.amp_volume != amplifierVolume) {
     amplifierVolume = Settings.data.amp_volume;
     amplifierWriteVolume();
   }
-  Wire.begin(D2, D3);
 }
 
 void amplifierLoop() {
+  amplifierButton.loop();
+  static bool buttonWasPressed = false;
+  bool buttonPressed = amplifierButton.pressed();
+  if (buttonPressed && !buttonWasPressed) {
+    amplifierMute(!amplifierMuted());
+  }
+  buttonWasPressed = buttonPressed;
+
   static int8_t counter = 0;
   counter += rotaryRead();
   if (counter >= 2) {
@@ -98,4 +122,32 @@ void amplifierLoop() {
       Settings.save();
     }
   }
+}
+
+void amplifierRecvState(JsonObject &value) {
+  uint8_t volume = int8_t(float(value["volume"]) * 63.0 + 0.5);
+  bool muted = value["muted"];
+  uint8_t newVolume = (muted ? 0x80 : 0x00) | volume;
+  if (newVolume != amplifierVolume) {
+    amplifierVolume = newVolume;
+    amplifierWriteVolume();
+  }
+}
+
+void amplifierSendState() {
+  if (!mqtt.connected()) return;
+
+  DynamicJsonBuffer jsonBuffer;
+  JsonObject& root = jsonBuffer.createObject();
+  root["origin"] = CLIENT_ID;
+  JsonObject& values = root.createNestedObject("value");
+
+  values["volume"] = float(amplifierVolume) / 63.0;
+  values["muted"] = amplifierMuted();
+
+  const size_t messageMaxLen = 128;
+  uint8_t message[messageMaxLen];
+  size_t messageLen = root.printTo((char*)message, messageMaxLen);
+
+  mqtt.publish(MQTT_PREFIX "a/amplifier", message, messageLen, true);
 }
