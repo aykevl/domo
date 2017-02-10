@@ -172,18 +172,6 @@ bool Light::inWakeup() {
   uint32_t ts_now = Time(now).dayTime();
   uint32_t ts_wake = time.dayTime();
 
-  static uint32_t lastPrint = 0;
-  uint32_t currentMillis = millis();
-  if (child == 1 && currentMillis - lastPrint > 5000) {
-    lastPrint = currentMillis;
-    Serial.print("inWakeup ");
-    Serial.print(now);
-    Serial.print(' ');
-    Serial.print(ts_now);
-    Serial.print(' ');
-    Serial.println(ts_wake);
-  }
-
   return (ts_wake - ts_now + 86400) % 86400 < (duration/1000);
 }
 
