@@ -6,13 +6,13 @@
 void Light::begin(uint8_t pin, uint8_t child, SettingsDataLight *settings) {
   this->pin = pin;
   this->child = child;
-  this->state = LIGHT_OFF;
   this->transitionStart = millis();
   this->wasInWakeup = false;
   this->settings = settings;
   time.setHour(settings->hour);
   time.setMinute(settings->minute);
   duration = settings->duration * 60000;
+  state = settings->state;
   enabled = settings->enabled;
   fullBrightness = settings->fullBrightness;
 
@@ -93,6 +93,9 @@ void Light::_off() {
   nextState = LIGHT_OFF;
   transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
   loop();
+
+  settings->state = LIGHT_OFF;
+  Settings.save();
 }
 
 void Light::wake() {
@@ -106,6 +109,9 @@ void Light::_wake() {
   nextState = LIGHT_WAKE;
   transitionStart = millis() - (1.0-y)*LIGHT_TIME_FADE;
   loop();
+
+  settings->state = LIGHT_ON;
+  Settings.save();
 }
 
 void Light::on() {
@@ -119,6 +125,9 @@ void Light::_on() {
   nextState = LIGHT_ON;
   transitionStart = millis() - y*LIGHT_TIME_FADE;
   loop();
+
+  settings->state = LIGHT_ON;
+  Settings.save();
 }
 
 lightState_t Light::currentState() {

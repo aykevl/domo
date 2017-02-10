@@ -7,6 +7,7 @@ typedef struct {
   uint8_t minute;
   uint8_t duration;
   float   fullBrightness;
+  uint8_t state;
   bool    enabled;
 } SettingsDataLight;
 
@@ -37,6 +38,7 @@ class SettingsClass {
           15,    // minute
           30,    // duration
           1.0,   // fullBrightness
+          1,     // state: LIGHT_OFF
           false, // enabled
       };
       data.light1 = light;
