@@ -18,6 +18,7 @@ class Ledstrip {
   bool buttonWasPressed = false;
   uint32_t rainbowMillis = 0;
   uint8_t rainbowColor = 0;
+  uint8_t white = 0; // how much white is added
 
 public:
   Ledstrip(uint8_t pin, Button button);
@@ -28,6 +29,7 @@ public:
 
 private:
   uint8_t applyGamma(uint8_t value) const;
+  void save() const;
 };
 void ledstripSetup();
 void ledstripLoop();

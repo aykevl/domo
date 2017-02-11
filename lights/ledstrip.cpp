@@ -114,6 +114,8 @@ Ledstrip::Ledstrip(uint8_t pin, Button button) :
 void Ledstrip::begin()
 {
   mode = Settings.data.ledstrip_mode;
+  speed = Settings.data.ledstrip_speed;
+  white = Settings.data.ledstrip_white;
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
 }
@@ -130,8 +132,7 @@ void Ledstrip::loop()
     // Registered a press!
     mode++;
     stripChanged = true;
-    Settings.data.ledstrip_mode = mode;
-    Settings.save();
+    save();
   }
   buttonWasPressed = buttonPressed;
 
@@ -139,7 +140,7 @@ void Ledstrip::loop()
     // Turn off the LED strip.
     case 0: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
-        strip.setPixelColor(i, strip.Color(0, 0, 0));
+        strip.setPixelColor(i, strip.Color(0, 0, 0, 0));
       }
       break;
     }
@@ -167,7 +168,11 @@ void Ledstrip::loop()
           };
           CRGB fl_rgb;
           hsv2rgb_rainbow(fl_hsv, fl_rgb);
-          strip.setPixelColor(i, strip.Color(fl_rgb.red, fl_rgb.green, fl_rgb.blue));
+          strip.setPixelColor(i, strip.Color(
+                fl_rgb.red,
+                fl_rgb.green,
+                fl_rgb.blue,
+                white));
         }
       }
       break;
@@ -196,7 +201,8 @@ void Ledstrip::loop()
         strip.setPixelColor(i,strip.Color(
               applyGamma(fl_rgb.red),
               applyGamma(fl_rgb.green),
-              applyGamma(fl_rgb.blue)));
+              applyGamma(fl_rgb.blue),
+              white));
       }
       break;
     }
@@ -226,7 +232,8 @@ void Ledstrip::loop()
           strip.setPixelColor(i, strip.Color(
                 applyGamma(fl_rgb.red),
                 applyGamma(fl_rgb.green),
-                applyGamma(fl_rgb.blue)));
+                applyGamma(fl_rgb.blue),
+                white));
         }
 
         // Moving along the distance (that random number we started out with).
@@ -274,9 +281,10 @@ void Ledstrip::loop()
           strip.setPixelColor(i, strip.Color(
                 applyGamma(fl_rgb.red),
                 applyGamma(fl_rgb.green),
-                applyGamma(fl_rgb.blue)));
+                applyGamma(fl_rgb.blue),
+                white));
         } else {
-          strip.setPixelColor(i, strip.Color(0, 0, 0));
+          strip.setPixelColor(i, strip.Color(0, 0, 0, white));
         }
       }
       break;
@@ -290,7 +298,8 @@ void Ledstrip::loop()
         strip.setPixelColor(i,strip.Color(
               applyGamma(fl_rgb.red),
               applyGamma(fl_rgb.green),
-              applyGamma(fl_rgb.blue)));
+              applyGamma(fl_rgb.blue),
+              white));
       }
       break;
     }
@@ -309,19 +318,30 @@ uint8_t Ledstrip::applyGamma(uint8_t value) const {
 }
 
 void Ledstrip::sendState() const {
-  uint8_t msg[4];
+  uint8_t msg[5];
   msg[0] = RADIO_MSG_LEDSTRIP;
   msg[1] = 0;
   uint8_t *arg = msg+2;
   arg[0] = mode;
   arg[1] = speed;
+  arg[2] = white;
 
   if (!radioSend(msg, sizeof(msg))) {
     Serial.println(F("failed to send ledstrip message"));
   }
 }
 
+void Ledstrip::save() const {
+  Settings.data.ledstrip_mode = mode;
+  Settings.data.ledstrip_speed = speed;
+  Settings.data.ledstrip_white = white;
+  Settings.save(); // TODO: throttling
+}
+
 void Ledstrip::gotMessage(uint8_t *arg) {
+  stripChanged = true;
   mode = arg[0];
   speed = arg[1]; // TODO: use a logarithmic scale for speed
+  white = arg[2];
+  save();
 }
