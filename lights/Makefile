@@ -2,7 +2,8 @@
 ARDUINO=arduino
 
 BOARD=arduino:avr:nano:cpu=atmega328
-OPTIONS=--board $(BOARD) --port /dev/ttyUSB0
+PORT=/dev/ttyUSB0
+OPTIONS=--board $(BOARD) --port $(PORT)
 
 verify:
 	$(ARDUINO) $(OPTIONS) --verify .
