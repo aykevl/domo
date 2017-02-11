@@ -126,8 +126,8 @@ void amplifierLoop() {
 
 void amplifierRecvState(JsonObject &value) {
   uint8_t volume = int8_t(float(value["volume"]) * 63.0 + 0.5);
-  bool muted = value["muted"];
-  uint8_t newVolume = (muted ? 0x80 : 0x00) | volume;
+  bool enabled = value["enabled"];
+  uint8_t newVolume = (enabled ? 0x00 : 0x80) | volume;
   if (newVolume != amplifierVolume) {
     amplifierVolume = newVolume;
     amplifierWriteVolume();
@@ -142,8 +142,8 @@ void amplifierSendState() {
   root["origin"] = CLIENT_ID;
   JsonObject& values = root.createNestedObject("value");
 
-  values["volume"] = float(amplifierVolume) / 63.0;
-  values["muted"] = amplifierMuted();
+  values["volume"] = float(amplifierVolume & 0x3f) / 63.0;
+  values["enabled"] = !amplifierMuted();
 
   const size_t messageMaxLen = 128;
   uint8_t message[messageMaxLen];
