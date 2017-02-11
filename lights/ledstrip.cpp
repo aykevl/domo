@@ -239,8 +239,12 @@ void Ledstrip::loop()
       break;
     }
 
-    //case 4: {
-    //}
+    case 6: { // white
+      for (uint8_t i=0; i<NUM_LEDS; i++) {
+        strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
+      }
+      break;
+    }
 
     // Unknown mode, reset to 'off'.
     default: {
