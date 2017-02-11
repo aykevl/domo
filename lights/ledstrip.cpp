@@ -128,6 +128,7 @@ void Ledstrip::loop()
   if (buttonPressed && !buttonWasPressed) {
     // Registered a press!
     mode++;
+    stripChanged = true;
     Settings.data.ledstrip_mode = mode;
     Settings.save();
   }
@@ -144,16 +145,21 @@ void Ledstrip::loop()
 
     // Show moving rainbow colors.
     case 1: {
-      uint8_t color = millis() / 128;
-      for (uint8_t i=0; i<NUM_LEDS; i++) {
-        const CHSV fl_hsv = CHSV {
-          color-i-i-i,
-          0xff,
-          0xff,
-        };
-        CRGB fl_rgb;
-        hsv2rgb_rainbow(fl_hsv, fl_rgb);
-        strip.setPixelColor(i, strip.Color(fl_rgb.red, fl_rgb.green, fl_rgb.blue));
+      uint32_t currentMillis = millis();
+      if (lastMillis - currentMillis >= 128) {
+        lastMillis += 128;
+        stripChanged = true;
+        rainbowColor++;
+        for (uint8_t i=0; i<NUM_LEDS; i++) {
+          const CHSV fl_hsv = CHSV {
+            rainbowColor-i-i-i,
+            0xff,
+            0xff,
+          };
+          CRGB fl_rgb;
+          hsv2rgb_rainbow(fl_hsv, fl_rgb);
+          strip.setPixelColor(i, strip.Color(fl_rgb.red, fl_rgb.green, fl_rgb.blue));
+        }
       }
       break;
     }
@@ -163,6 +169,7 @@ void Ledstrip::loop()
     case 3:
     case 4:
     {
+      stripChanged = true;
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         // X location is constant, but we move along the Y at the rate of millis()
         //uint8_t index = inoise8(i*noise_xscale,millis()*noise_yscale*NUM_LEDS/255);
@@ -188,11 +195,13 @@ void Ledstrip::loop()
     // http://pastebin.com/r70Qk6Bn
     // From YouTube (wrong code): https://www.youtube.com/watch?v=vdliIFe0NwQ
     case 5: {
-      static CRGBPalette16 currentPalette(CRGB::Black);
-      static CRGBPalette16 targetPalette(OceanColors_p);
-      static uint16_t dist = random16(12345);         // A random number for our noise generator.
-
       EVERY_N_MILLISECONDS(10) {
+        stripChanged = true;
+
+        static CRGBPalette16 currentPalette(CRGB::Black);
+        static CRGBPalette16 targetPalette(OceanColors_p);
+        static uint16_t dist = random16(12345);         // A random number for our noise generator.
+
         // Blend towards the target palette
         nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges);
         // Update the LED array with noise at the new location
@@ -216,15 +225,15 @@ void Ledstrip::loop()
         // In some sketches, I've used millis() instead of an incremented
         // counter. Works a treat.
         dist += beatsin8(10, 1, 2); // orig: beatsin8(10, 1, 4)
-      }
 
-      EVERY_N_SECONDS(5) {
-        // Change the target palette to a random one every 5 seconds.
-        targetPalette = CRGBPalette16(
-            CHSV(random8(), 255, random8(128,255)),
-            CHSV(random8(), 255, random8(128,255)),
-            CHSV(random8(), 192, random8(128,255)),
-            CHSV(random8(), 255, random8(128,255)));
+        EVERY_N_SECONDS(5) {
+          // Change the target palette to a random one every 5 seconds.
+          targetPalette = CRGBPalette16(
+              CHSV(random8(), 255, random8(128,255)),
+              CHSV(random8(), 255, random8(128,255)),
+              CHSV(random8(), 192, random8(128,255)),
+              CHSV(random8(), 255, random8(128,255)));
+        }
       }
 
       break;
@@ -234,10 +243,12 @@ void Ledstrip::loop()
     //}
 
     // Unknown mode, reset to 'off'.
-    default:
+    default: {
+      stripChanged = true;
       mode = 0;
       return; // restart loop (don't show pattern)
       break;
+    }
 
     // *** After here only test patters
 
@@ -260,6 +271,7 @@ void Ledstrip::loop()
 
     // Fade test.
     case 11: {
+      stripChanged = true; // TODO
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         CRGB fl_rgb = ColorFromPalette16(paletteFade, uint16_t(i)*256+(millis()));
         strip.setPixelColor(i,strip.Color(
@@ -271,7 +283,10 @@ void Ledstrip::loop()
     }
   }
 
-  strip.show();
+  if (stripChanged) {
+    stripChanged = false;
+    strip.show();
+  }
 }
 
 
