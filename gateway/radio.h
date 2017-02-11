@@ -7,6 +7,7 @@ enum {
   RADIO_MSG_COLOR,
   RADIO_MSG_LIGHT,
   RADIO_MSG_HT,
+  RADIO_MSG_LEDSTRIP,
 };
 
 const uint8_t RADIO_MSG_REQUEST = 0x80;

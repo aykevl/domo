@@ -16,6 +16,7 @@ void radioSetup() {
 
   light1.sendState();
   light2.sendState();
+  ledstrip.sendState();
 
   radio.startListening();
 }
@@ -46,12 +47,17 @@ void radioLoop() {
   Serial.println("got message");
   if (request) {
     Serial.println("got request");
-    if (command == RADIO_MSG_LIGHT) {
-      if (child == 1) {
-        light1.sendState();
-      } else if (child == 2) {
-        light2.sendState();
-      }
+    switch (command) {
+      case RADIO_MSG_LIGHT:
+        if (child == 1) {
+          light1.sendState();
+        } else if (child == 2) {
+          light2.sendState();
+        }
+        break;
+      case RADIO_MSG_LEDSTRIP:
+        ledstrip.sendState();
+        break;
     }
   } else {
     switch(command) {
@@ -65,6 +71,10 @@ void radioLoop() {
 
       case RADIO_MSG_TIME:
         radioRecvTime(arg);
+        break;
+
+      case RADIO_MSG_LEDSTRIP:
+        ledstrip.gotMessage(arg);
         break;
     }
   }

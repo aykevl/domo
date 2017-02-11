@@ -1,7 +1,8 @@
 
 #include "ledstrip.h"
-#include "settings.h"
 #include "math.h"
+#include "settings.h"
+#include "radio.h"
 
 #include <hsv2rgb.h> // FastLED
 #ifdef __AVR__
@@ -146,10 +147,18 @@ void Ledstrip::loop()
     // Show moving rainbow colors.
     case 1: {
       uint32_t currentMillis = millis();
-      if (lastMillis - currentMillis >= 128) {
-        lastMillis += 128;
+      if (stripChanged || currentMillis - rainbowMillis >= uint32_t(speed)*4) {
+        if (speed != 0xff) {
+          rainbowColor++;
+          if (currentMillis - rainbowMillis > uint32_t(speed)*4*2) {
+            // we're just getting into this mode (or there was a long delay)
+            rainbowMillis = currentMillis;
+          } else {
+            // we were already in this mode
+            rainbowMillis += uint32_t(speed)*4;
+          }
+        }
         stripChanged = true;
-        rainbowColor++;
         for (uint8_t i=0; i<NUM_LEDS; i++) {
           const CHSV fl_hsv = CHSV {
             rainbowColor-i-i-i,
@@ -297,4 +306,22 @@ void Ledstrip::loop()
 uint8_t Ledstrip::applyGamma(uint8_t value) const {
   return value;
   return pgm_read_byte(gamma8 + value);
+}
+
+void Ledstrip::sendState() const {
+  uint8_t msg[4];
+  msg[0] = RADIO_MSG_LEDSTRIP;
+  msg[1] = 0;
+  uint8_t *arg = msg+2;
+  arg[0] = mode;
+  arg[1] = speed;
+
+  if (!radioSend(msg, sizeof(msg))) {
+    Serial.println(F("failed to send ledstrip message"));
+  }
+}
+
+void Ledstrip::gotMessage(uint8_t *arg) {
+  mode = arg[0];
+  speed = arg[1]; // TODO: use a logarithmic scale for speed
 }

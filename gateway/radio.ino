@@ -8,6 +8,7 @@
 #include "colorlight.h"
 #include "light.h"
 #include "htsensor.h"
+#include "ledstrip.h"
 
 const uint8_t CHILDREN_LEN = 3;
 const char *CHILDREN[CHILDREN_LEN] = {NULL, "wakeup", "readinglight"};
@@ -32,7 +33,6 @@ void radioLoop() {
     uint8_t command = msg[0] & 0x7f; // take all other bits
     uint8_t child = msg[1];
     uint8_t *arg = msg+2;            // the rest of the data (30 bytes) is the argument
-    log("got radio message");
 
     if (request) {
       switch (command) {
@@ -53,14 +53,17 @@ void radioLoop() {
         case RADIO_MSG_HT:
           htsensorSend(arg);
           break;
+        case RADIO_MSG_LEDSTRIP:
+          ledstripSend(arg);
+          break;
       }
     }
   }
 
   if (mqtt.connected()) {
     static uint16_t stage = 1; // 1, 2, 3, ...
-    if (stage <= 2) {
-      // stage 1 and 2 follows
+    if (stage <= 3) {
+      // stage 1-3 follows
 
       static uint32_t startMillis = 0;
       if (startMillis == 0) {
@@ -70,9 +73,13 @@ void radioLoop() {
       uint32_t elapsed = millis() - startMillis;
       if (elapsed > stage*100) { // do one stage per 100ms
         uint8_t msg[2];
-        msg[0] = RADIO_MSG_LIGHT | RADIO_MSG_REQUEST;
-        msg[1] = stage;
-        log(String("requesting child ") + msg[1]);
+        if (stage == 1 || stage == 2) {
+          msg[0] = RADIO_MSG_LIGHT | RADIO_MSG_REQUEST;
+          msg[1] = stage;
+        } else if (stage == 3) {
+          msg[0] = RADIO_MSG_LEDSTRIP | RADIO_MSG_REQUEST;
+          msg[1] = 0;
+        }
 
         if (!radioSend(msg, sizeof(msg))) {
           log(F("failed to send request message"));

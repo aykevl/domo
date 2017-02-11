@@ -5,6 +5,7 @@
 #include "config.h"
 #include "colorlight.h"
 #include "light.h"
+#include "ledstrip.h"
 #include "amplifier.h"
 
 WiFiClient mqttClient;
@@ -82,6 +83,8 @@ void mqttCallback(char *topic, byte *payload, unsigned int length) {
     lightReceive(1, value);
   } else if (strcmp(topic, MQTT_PREFIX "a/readinglight") == 0) {
     lightReceive(2, value);
+  } else if (strcmp(topic, MQTT_PREFIX "a/ledstrip") == 0) {
+    ledstripReceive(value);
   } else if (strcmp(topic, MQTT_PREFIX "a/amplifier") == 0) {
     amplifierRecvState(value);
   } else {
