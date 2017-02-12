@@ -7,6 +7,10 @@
 
 #define NUM_LEDS 30
 
+const uint8_t LEDSTRIP_FLAG_SPARKLES = 0b10000000;
+const uint8_t LEDSTRIP_MODE_MASK     = 0b00000111;
+
+
 class Ledstrip {
   Button button;
   uint8_t pin;
@@ -16,13 +20,14 @@ class Ledstrip {
   uint8_t speed; // slowness (higher is slower)
   uint8_t spread; // higher is closer together
   uint8_t palette;
+  uint8_t white; // how much white is added
+  bool sparkles;
   uint8_t loopCounter = 0;
   bool buttonWasPressed = false;
   uint32_t rainbowMillis = 0;
   uint8_t rainbowColor = 0;
   uint32_t noiseMillis = 0;
   uint32_t noiseYScale = 0;
-  uint8_t white = 0; // how much white is added
 
 public:
   Ledstrip(uint8_t pin, Button button);

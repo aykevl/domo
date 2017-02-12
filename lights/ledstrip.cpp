@@ -93,6 +93,7 @@ void Ledstrip::begin()
   speed = Settings.data.ledstrip_speed;
   spread = Settings.data.ledstrip_spread;
   white = Settings.data.ledstrip_white;
+  sparkles = Settings.data.ledstrip_sparkles;
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
 }
@@ -140,6 +141,7 @@ void Ledstrip::loop()
     case 1: {
       uint32_t currentMillis = millis();
       if (stripChanged || currentMillis - rainbowMillis >= uint32_t(speed)*4) {
+        stripChanged = true;
         if (speed != 0xff) {
           rainbowColor++;
           if (currentMillis - rainbowMillis > uint32_t(speed)*4*2) {
@@ -150,24 +152,24 @@ void Ledstrip::loop()
             rainbowMillis += uint32_t(speed)*4;
           }
         }
-        stripChanged = true;
 
-        uint8_t color = rainbowColor;
-        for (uint8_t i=0; i<NUM_LEDS; i++) {
-          const CHSV fl_hsv = CHSV {
-            color,
-            0xff,
-            0xff,
-          };
-          color -= spread/9;
-          CRGB fl_rgb;
-          hsv2rgb_rainbow(fl_hsv, fl_rgb);
-          strip.setPixelColor(i, strip.Color(
-                fl_rgb.red,
-                fl_rgb.green,
-                fl_rgb.blue,
-                white));
-        }
+      }
+
+      uint8_t color = rainbowColor;
+      for (uint8_t i=0; i<NUM_LEDS; i++) {
+        const CHSV fl_hsv = CHSV {
+          color,
+          0xff,
+          0xff,
+        };
+        color -= spread/9;
+        CRGB fl_rgb;
+        hsv2rgb_rainbow(fl_hsv, fl_rgb);
+        strip.setPixelColor(i, strip.Color(
+              fl_rgb.red,
+              fl_rgb.green,
+              fl_rgb.blue,
+              white));
       }
       break;
     }
@@ -175,11 +177,10 @@ void Ledstrip::loop()
     // Show noise based on color palette.
     case 2:
     {
-      stripChanged = true;
-
       // Move along the Y axis (time).
       uint32_t currentMillis = millis();
       if (currentMillis - noiseMillis > speed) {
+        stripChanged = true;
         noiseMillis = currentMillis;
         noiseYScale += 256;
       }
@@ -225,6 +226,39 @@ void Ledstrip::loop()
     }
   }
 
+  // Display sparkle-like flickering
+  if (sparkles) {
+    stripChanged = true;
+    uint32_t currentMillis = millis();
+    for (uint8_t i=0; i<NUM_LEDS; i++) {
+      // Vary the intensity of the flickering over time and distance.
+      uint8_t intensity = inoise8(currentMillis / 4, uint16_t(i)*8);
+      if (intensity < 96) {
+        intensity = 0;
+      } else {
+        intensity = (uint16_t(intensity) - 96);
+        if (intensity < 128) {
+          intensity *= 2;
+        } else {
+          intensity = 255;
+        }
+      }
+      if (intensity == 0) continue;
+
+      // Make sparkles: display the highest peaks of a fast-moving noise
+      // function with a very tight spread, and amplify these peaks.
+      // Adjust them for intensity.
+      uint8_t amplitude = inoise8(millis()*2+uint16_t(i)*16, uint16_t(i)*128);
+      if (amplitude >= 192) {
+        amplitude = (amplitude - 192) * 4;;
+        amplitude = uint16_t(amplitude) * intensity / 256;
+        uint32_t color = strip.getPixelColor(i);
+        color |= uint32_t(amplitude) << 24;
+        strip.setPixelColor(i, color);
+      }
+    }
+  }
+
   if (stripChanged) {
     stripChanged = false;
     strip.show();
@@ -242,6 +276,7 @@ void Ledstrip::save() const {
   Settings.data.ledstrip_speed = speed;
   Settings.data.ledstrip_spread = spread;
   Settings.data.ledstrip_white = white;
+  Settings.data.ledstrip_sparkles = sparkles;
   Settings.save(); // TODO: throttling
 }
 
@@ -251,6 +286,9 @@ void Ledstrip::sendState() const {
   msg[1] = 0;
   uint8_t *arg = msg+2;
   arg[0] = mode;
+  if (sparkles) {
+    arg[0] |= LEDSTRIP_FLAG_SPARKLES;
+  }
   arg[1] = speed;
   arg[2] = spread;
   arg[3] = white;
@@ -263,9 +301,10 @@ void Ledstrip::sendState() const {
 
 void Ledstrip::gotMessage(uint8_t *arg) {
   stripChanged = true;
-  if (arg[0] < NUM_MODES_ALL) {
-    mode = arg[0];
+  if (arg[0] & LEDSTRIP_MODE_MASK < NUM_MODES_ALL) {
+    mode = arg[0] & LEDSTRIP_MODE_MASK;
   }
+  sparkles = (arg[0] & LEDSTRIP_FLAG_SPARKLES) != 0;
   speed = arg[1];
   spread = arg[2];
   white = arg[3];

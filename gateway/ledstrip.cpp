@@ -14,7 +14,7 @@ void ledstripSend(uint8_t *arg) {
   root["origin"] = CLIENT_ID;
   JsonObject& values = root.createNestedObject("value");
 
-  switch (arg[0]) {
+  switch (arg[0] & LEDSTRIP_MODE_MASK) {
     case LEDSTRIP_OFF:
       values["mode"] = "off";
       break;
@@ -31,6 +31,7 @@ void ledstripSend(uint8_t *arg) {
       values["mode"] = "palette";
       break;
   }
+  values["sparkles"] = (arg[0] & LEDSTRIP_FLAG_SPARKLES) != 0;
   values["speed"] = 1.0-log(float(arg[1])+1.0)/5.545;
   values["spread"] = float(arg[2]) / 255.0;
   values["white"] = float(arg[3]) / 255.0;
@@ -63,6 +64,10 @@ void ledstripReceive(JsonObject &value) {
     } else if (strcmp(mode, "palette") == 0) {
       arg[0] = LEDSTRIP_PALETTE;
     }
+  }
+
+  if (bool(value["sparkles"])) {
+    arg[0] |= LEDSTRIP_FLAG_SPARKLES;
   }
 
   arg[1] = exp((1.0-float(value["speed"]))*5.545)-1.0 + 0.5;
