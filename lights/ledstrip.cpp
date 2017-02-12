@@ -143,7 +143,11 @@ void Ledstrip::loop()
       if (stripChanged || currentMillis - rainbowMillis >= uint32_t(speed)*4) {
         stripChanged = true;
         if (speed != 0xff) {
-          rainbowColor++;
+          if (rainbowReverseMovement) {
+            rainbowColor--;
+          } else {
+            rainbowColor++;
+          }
           if (currentMillis - rainbowMillis > uint32_t(speed)*4*2) {
             // we're just getting into this mode (or there was a long delay)
             rainbowMillis = currentMillis;
@@ -162,7 +166,11 @@ void Ledstrip::loop()
           0xff,
           0xff,
         };
-        color -= spread/9;
+        if (rainbowReverseColor) {
+          color += spread/9;
+        } else {
+          color -= spread/9;
+        }
         CRGB fl_rgb;
         hsv2rgb_rainbow(fl_hsv, fl_rgb);
         strip.setPixelColor(i, strip.Color(
@@ -277,6 +285,8 @@ void Ledstrip::save() const {
   Settings.data.ledstrip_spread = spread;
   Settings.data.ledstrip_white = white;
   Settings.data.ledstrip_sparkles = sparkles;
+  Settings.data.ledstrip_rainbowReverseMovement = rainbowReverseMovement;
+  Settings.data.ledstrip_rainbowReverseColor = rainbowReverseColor;
   Settings.save(); // TODO: throttling
 }
 
@@ -289,6 +299,12 @@ void Ledstrip::sendState() const {
   if (sparkles) {
     arg[0] |= LEDSTRIP_FLAG_SPARKLES;
   }
+  if (rainbowReverseMovement) {
+    arg[0] |= LEDSTRIP_FLAG_RAINBOW_REVERSE;
+  }
+  if (rainbowReverseColor) {
+    arg[0] |= LEDSTRIP_FLAG_RAINBOW_RBG;
+  }
   arg[1] = speed;
   arg[2] = spread;
   arg[3] = white;
@@ -300,16 +316,20 @@ void Ledstrip::sendState() const {
 }
 
 void Ledstrip::gotMessage(uint8_t *arg) {
-  stripChanged = true;
-  if (arg[0] & LEDSTRIP_MODE_MASK < NUM_MODES_ALL) {
+  Serial.println(arg[0], BIN);
+  if ((arg[0] & LEDSTRIP_MODE_MASK) < NUM_MODES_ALL) {
     mode = arg[0] & LEDSTRIP_MODE_MASK;
   }
   sparkles = (arg[0] & LEDSTRIP_FLAG_SPARKLES) != 0;
+  rainbowReverseMovement = (arg[0] & LEDSTRIP_FLAG_RAINBOW_REVERSE) != 0;
+  rainbowReverseColor = (arg[0] & LEDSTRIP_FLAG_RAINBOW_RBG) != 0;
   speed = arg[1];
   spread = arg[2];
   white = arg[3];
   if (arg[4] < NUM_PALETTES) {
     palette = arg[4];
   }
+
+  stripChanged = true;
   save();
 }

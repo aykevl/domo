@@ -32,6 +32,8 @@ void ledstripSend(uint8_t *arg) {
       break;
   }
   values["sparkles"] = (arg[0] & LEDSTRIP_FLAG_SPARKLES) != 0;
+  values["rainbowBackwards"] = (arg[0] & LEDSTRIP_FLAG_RAINBOW_REVERSE) != 0;
+  values["rainbowRBG"] = (arg[0] & LEDSTRIP_FLAG_RAINBOW_RBG) != 0;
   values["speed"] = 1.0-log(float(arg[1])+1.0)/5.545;
   values["spread"] = float(arg[2]) / 255.0;
   values["white"] = float(arg[3]) / 255.0;
@@ -68,6 +70,12 @@ void ledstripReceive(JsonObject &value) {
 
   if (bool(value["sparkles"])) {
     arg[0] |= LEDSTRIP_FLAG_SPARKLES;
+  }
+  if (bool(value["rainbowBackwards"])) {
+    arg[0] |= LEDSTRIP_FLAG_RAINBOW_REVERSE;
+  }
+  if (bool(value["rainbowRBG"])) {
+    arg[0] |= LEDSTRIP_FLAG_RAINBOW_RBG;
   }
 
   arg[1] = exp((1.0-float(value["speed"]))*5.545)-1.0 + 0.5;
