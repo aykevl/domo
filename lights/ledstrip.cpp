@@ -16,7 +16,6 @@ const uint8_t NUM_MODES_ALL = 6;
 
 // Mode 2
 const uint32_t noise_xscale = 32;  // How far apart they are
-const uint32_t noise_yscale = 16;  // How fast they move
 
 // Mode 3:
 const uint16_t scale = 16;          // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
@@ -181,11 +180,18 @@ void Ledstrip::loop()
     case 2:
     {
       stripChanged = true;
+
+      // Move along the Y axis (time).
+      uint32_t currentMillis = millis();
+      if (currentMillis - noiseMillis > speed) {
+        noiseMillis = currentMillis;
+        noiseYScale += 256;
+      }
+
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         // X location is constant, but we move along the Y at the rate of millis()
         //uint8_t index = inoise8(i*noise_xscale,millis()*noise_yscale*NUM_LEDS/255);
-        uint16_t index = inoise16(uint32_t(i)*256*noise_xscale,
-                                millis()*noise_yscale);
+        uint16_t index = inoise16(uint32_t(i)*256*noise_xscale, noiseYScale);
 
         CRGB fl_rgb = ColorFromPalette16(palettes[palette], index);
         strip.setPixelColor(i,strip.Color(

@@ -19,6 +19,8 @@ class Ledstrip {
   bool buttonWasPressed = false;
   uint32_t rainbowMillis = 0;
   uint8_t rainbowColor = 0;
+  uint32_t noiseMillis = 0;
+  uint32_t noiseYScale = 0;
   uint8_t white = 0; // how much white is added
 
 public:
