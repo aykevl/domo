@@ -11,56 +11,61 @@
 
 #define BRIGHTNESS 255
 
-// Mode 2, 3, 4:
+const uint8_t NUM_MODES = 4;
+
+// Mode 2
 const uint32_t noise_xscale = 32;  // How far apart they are
 const uint32_t noise_yscale = 16;  // How fast they move
 
-// Mode 5:
+// Mode 3:
 const uint16_t scale = 16;          // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
 const uint8_t maxChanges = 48;      // Value for blending between palettes
 
 
-CRGBPalette16 palette1 = CRGBPalette16( // red-blue, green-red
-  0x000000,
-  0x000000,
-  0xff0000,
-  0xff8800,
-  0x66aa00,
-  0x000000,
-  0x000000,
-  0x000088,
-  0x0000ff,
-  0x8800ee,
-  0x9900cc,
-  0xff00aa,
-  0xff0088,
-  0xff0044,
-  0xff0000,
-  0xff3300);
+const uint8_t NUM_PALETTES = 3;
+const CRGBPalette16 palettes[NUM_PALETTES] = {
+  CRGBPalette16( // red-blue, green-red
+    0x000000,
+    0x000000,
+    0xff0000,
+    0xff8800,
+    0x66aa00,
+    0x000000,
+    0x000000,
+    0x000088,
+    0x0000ff,
+    0x8800ee,
+    0x9900cc,
+    0xff00aa,
+    0xff0088,
+    0xff0044,
+    0xff0000,
+    0xff3300),
+  CRGBPalette16( // red-blue
+    0xff6600,
+    0xff3300,
+    0xff0000,
+    0xff0011,
+    0xff0044,
+    0xee0077,
+    0xbb00aa,
+    0x8800dd,
+    0x6600ff,
+    0x4400ff,
+    0x2200ff,
+    0x0000ff,
+    0x0000ff,
+    0x2222ff,
+    0x4444ff,
+    0x6666ff),
+  CRGBPalette16( // RGB
+    0xff0000,
+    0x00ff00,
+    0x0000ff,
+    0xff0000),
+};
 
-CRGBPalette16 palette2 = CRGBPalette16( // red-blue
-  0xff6600,
-  0xff3300,
-  0xff0000,
-  0xff0011,
-  0xff0044,
-  0xee0077,
-  0xbb00aa,
-  0x8800dd,
-  0x6600ff,
-  0x4400ff,
-  0x2200ff,
-  0x0000ff,
-  0x0000ff,
-  0x2222ff,
-  0x4444ff,
-  0x6666ff);
 
-CRGBPalette16 palette3 = CRGBPalette16( // RGB
-  0xff0000,
-  0x00ff00,
-  0x0000ff,
-  0xff0000);
 
 // Test palette
 CRGBPalette16 paletteFade = CRGBPalette16(
@@ -130,9 +135,23 @@ void Ledstrip::loop()
   bool buttonPressed = button.pressed();
   if (buttonPressed && !buttonWasPressed) {
     // Registered a press!
-    mode++;
+    if (mode == 2) {
+      // loop through palettes when in color palette mode
+      if (palette+1 < NUM_PALETTES) {
+        palette++;
+      } else {
+        palette = 0;
+        mode++;
+      }
+    } else if (mode+1 < NUM_MODES) {
+      mode++;
+    } else {
+      // end of loop
+      mode = 0;
+    }
     stripChanged = true;
     save();
+    sendState();
   }
   buttonWasPressed = buttonPressed;
 
@@ -180,8 +199,6 @@ void Ledstrip::loop()
 
     // Show noise based on color palette.
     case 2:
-    case 3:
-    case 4:
     {
       stripChanged = true;
       for (uint8_t i=0; i<NUM_LEDS; i++) {
@@ -190,14 +207,7 @@ void Ledstrip::loop()
         uint16_t index = inoise16(uint32_t(i)*256*noise_xscale,
                                 millis()*noise_yscale);
 
-        CRGB fl_rgb;
-        if (mode == 2) {
-          fl_rgb = ColorFromPalette16(palette1, index);
-        } else if (mode == 3) {
-          fl_rgb = ColorFromPalette16(palette2, index);
-        } else { // mode == 4
-          fl_rgb = ColorFromPalette16(palette3, index);
-        }
+        CRGB fl_rgb = ColorFromPalette16(palettes[palette], index);
         strip.setPixelColor(i,strip.Color(
               applyGamma(fl_rgb.red),
               applyGamma(fl_rgb.green),
@@ -209,7 +219,7 @@ void Ledstrip::loop()
 
     // http://pastebin.com/r70Qk6Bn
     // From YouTube (wrong code): https://www.youtube.com/watch?v=vdliIFe0NwQ
-    case 5: {
+    case 3: {
       EVERY_N_MILLISECONDS(10) {
         stripChanged = true;
 
@@ -255,18 +265,10 @@ void Ledstrip::loop()
       break;
     }
 
-    case 6: { // white
+    case 4: { // white
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
       }
-      break;
-    }
-
-    // Unknown mode, reset to 'off'.
-    default: {
-      stripChanged = true;
-      mode = 0;
-      return; // restart loop (don't show pattern)
       break;
     }
 
@@ -277,7 +279,7 @@ void Ledstrip::loop()
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         uint16_t index = i*8;
         if (index <= 0xff) {
-          CRGB fl_rgb = ColorFromPalette(palette2, index);
+          CRGB fl_rgb = ColorFromPalette(palettes[palette], index);
           strip.setPixelColor(i, strip.Color(
                 applyGamma(fl_rgb.red),
                 applyGamma(fl_rgb.green),
@@ -317,20 +319,6 @@ uint8_t Ledstrip::applyGamma(uint8_t value) const {
   return pgm_read_byte(gamma8 + value);
 }
 
-void Ledstrip::sendState() const {
-  uint8_t msg[5];
-  msg[0] = RADIO_MSG_LEDSTRIP;
-  msg[1] = 0;
-  uint8_t *arg = msg+2;
-  arg[0] = mode;
-  arg[1] = speed;
-  arg[2] = white;
-
-  if (!radioSend(msg, sizeof(msg))) {
-    Serial.println(F("failed to send ledstrip message"));
-  }
-}
-
 void Ledstrip::save() const {
   Settings.data.ledstrip_mode = mode;
   Settings.data.ledstrip_speed = speed;
@@ -338,10 +326,30 @@ void Ledstrip::save() const {
   Settings.save(); // TODO: throttling
 }
 
+void Ledstrip::sendState() const {
+  uint8_t msg[6];
+  msg[0] = RADIO_MSG_LEDSTRIP;
+  msg[1] = 0;
+  uint8_t *arg = msg+2;
+  arg[0] = mode;
+  arg[1] = speed;
+  arg[2] = white;
+  arg[3] = palette;
+
+  if (!radioSend(msg, sizeof(msg))) {
+    Serial.println(F("failed to send ledstrip message"));
+  }
+}
+
 void Ledstrip::gotMessage(uint8_t *arg) {
   stripChanged = true;
-  mode = arg[0];
+  if (arg[0] < NUM_MODES) {
+    mode = arg[0];
+  }
   speed = arg[1]; // TODO: use a logarithmic scale for speed
   white = arg[2];
+  if (arg[3] < NUM_PALETTES) {
+    palette = arg[3];
+  }
   save();
 }

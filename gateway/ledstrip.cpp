@@ -21,9 +21,19 @@ void ledstripSend(uint8_t *arg) {
     case LEDSTRIP_COLOR:
       values["mode"] = "color";
       break;
+    case LEDSTRIP_NOISE:
+      values["mode"] = "noise";
+      break;
+    case LEDSTRIP_RANDOMNOISE:
+      values["mode"] = "randomnoise";
+      break;
+    case LEDSTRIP_WHITE:
+      values["mode"] = "white";
+      break;
   }
   values["speed"] = 1.0-log(float(arg[1])+1.0)/5.545;
   values["white"] = float(arg[2]) / 255.0;
+  values["palette"] = arg[3];
 
   const size_t messageMaxLen = 192; // TODO determine
   uint8_t message[messageMaxLen];
@@ -33,7 +43,7 @@ void ledstripSend(uint8_t *arg) {
 }
 
 void ledstripReceive(JsonObject &value) {
-  uint8_t msg[5];
+  uint8_t msg[6];
   msg[0] = RADIO_MSG_LEDSTRIP;
   msg[1] = 0;
 
@@ -45,11 +55,18 @@ void ledstripReceive(JsonObject &value) {
       arg[0] = LEDSTRIP_OFF;
     } else if (strcmp(mode, "color") == 0) {
       arg[0] = LEDSTRIP_COLOR;
+    } else if (strcmp(mode, "noise") == 0) {
+      arg[0] = LEDSTRIP_NOISE;
+    } else if (strcmp(mode, "randomnoise") == 0) {
+      arg[0] = LEDSTRIP_RANDOMNOISE;
+    } else if (strcmp(mode, "white") == 0) {
+      arg[0] = LEDSTRIP_WHITE;
     }
   }
 
   arg[1] = exp((1.0-float(value["speed"]))*5.545)-1.0 + 0.5;
   arg[2] = float(value["white"]) * 255.0 + 0.5;
+  arg[3] = value["palette"];
 
   if (!radioSend(msg, sizeof(msg))) {
     log(F("couldn't sent ledstrip update"));

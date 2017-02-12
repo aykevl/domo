@@ -19,14 +19,15 @@ typedef struct {
   uint8_t ledstrip_mode;
   uint8_t ledstrip_speed;
   uint8_t ledstrip_white;
+  uint8_t ledstrip_palette;
 } SettingsData;
 
 const uint8_t SETTINGS_VERSION = 1;
 
 class SettingsClass {
-
   public:
     SettingsData data;
+
     void begin() {
       reset();
       load();
@@ -48,6 +49,7 @@ class SettingsClass {
       data.ledstrip_mode = 0;
       data.ledstrip_speed = 32;
       data.ledstrip_white = 0;
+      data.ledstrip_palette = 0;
     }
 
     void save() {
