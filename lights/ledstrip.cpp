@@ -11,13 +11,8 @@
 
 #define BRIGHTNESS 255
 
-const uint8_t NUM_MODES_BUTTON = 5;
-const uint8_t NUM_MODES_ALL = 6;
-
-// Mode 3:
-const uint16_t scale = 16;          // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
-const uint8_t maxChanges = 48;      // Value for blending between palettes
-
+const uint8_t NUM_MODES_BUTTON = 4;
+const uint8_t NUM_MODES_ALL = 5;
 
 const uint8_t NUM_PALETTES = 3;
 const CRGBPalette16 palettes[NUM_PALETTES] = {
@@ -204,55 +199,7 @@ void Ledstrip::loop()
       break;
     }
 
-    // http://pastebin.com/r70Qk6Bn
-    // From YouTube (wrong code): https://www.youtube.com/watch?v=vdliIFe0NwQ
-    case 3: {
-      EVERY_N_MILLISECONDS(10) {
-        stripChanged = true;
-
-        static CRGBPalette16 currentPalette(CRGB::Black);
-        static CRGBPalette16 targetPalette(OceanColors_p);
-        static uint16_t dist = random16(12345);         // A random number for our noise generator.
-
-        // Blend towards the target palette
-        nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges);
-        // Update the LED array with noise at the new location
-
-        // Just ONE loop to fill up the LED array as all of the pixels change.
-        for(uint8_t i = 0; i < NUM_LEDS; i++) {
-          // Get a value from the noise function. I'm using both x and y axis.
-          //uint16_t index = uint16_t(inoise8(i*scale, dist+i*scale))*256;
-          uint16_t index = inoise16(uint32_t(i)*scale*256, uint32_t(dist)*256+uint32_t(i)*scale*256);
-
-          // With that value, look up the 8 bit colour palette value and assign it to the current LED.
-          CRGB fl_rgb = ColorFromPalette16(currentPalette, index, 255, LINEARBLEND);
-          strip.setPixelColor(i, strip.Color(
-                applyGamma(fl_rgb.red),
-                applyGamma(fl_rgb.green),
-                applyGamma(fl_rgb.blue),
-                white));
-        }
-
-        // Moving along the distance (that random number we started out with).
-        // Vary it a bit with a sine wave.
-        // In some sketches, I've used millis() instead of an incremented
-        // counter. Works a treat.
-        dist += beatsin8(10, 1, 2); // orig: beatsin8(10, 1, 4)
-
-        EVERY_N_SECONDS(5) {
-          // Change the target palette to a random one every 5 seconds.
-          targetPalette = CRGBPalette16(
-              CHSV(random8(), 255, random8(128,255)),
-              CHSV(random8(), 255, random8(128,255)),
-              CHSV(random8(), 192, random8(128,255)),
-              CHSV(random8(), 255, random8(128,255)));
-        }
-      }
-
-      break;
-    }
-
-    case 4: { // white
+    case 3: { // white
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
       }
@@ -260,7 +207,7 @@ void Ledstrip::loop()
     }
 
     // Show color palette.
-    case 5: {
+    case 4: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         uint16_t index = i*8;
         if (index <= 0xff) {
