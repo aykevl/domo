@@ -7,6 +7,7 @@ typedef enum {
   LEDSTRIP_NOISE,
   LEDSTRIP_RANDOMNOISE,
   LEDSTRIP_WHITE,
+  LEDSTRIP_PALETTE,
 } ledstripMode_t;
 
 void ledstripSend(uint8_t *arg);

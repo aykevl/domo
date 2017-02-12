@@ -30,6 +30,9 @@ void ledstripSend(uint8_t *arg) {
     case LEDSTRIP_WHITE:
       values["mode"] = "white";
       break;
+    case LEDSTRIP_PALETTE:
+      values["mode"] = "palette";
+      break;
   }
   values["speed"] = 1.0-log(float(arg[1])+1.0)/5.545;
   values["white"] = float(arg[2]) / 255.0;
@@ -61,6 +64,8 @@ void ledstripReceive(JsonObject &value) {
       arg[0] = LEDSTRIP_RANDOMNOISE;
     } else if (strcmp(mode, "white") == 0) {
       arg[0] = LEDSTRIP_WHITE;
+    } else if (strcmp(mode, "palette") == 0) {
+      arg[0] = LEDSTRIP_PALETTE;
     }
   }
 

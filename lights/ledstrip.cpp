@@ -11,7 +11,8 @@
 
 #define BRIGHTNESS 255
 
-const uint8_t NUM_MODES = 4;
+const uint8_t NUM_MODES_BUTTON = 5;
+const uint8_t NUM_MODES_ALL = 6;
 
 // Mode 2
 const uint32_t noise_xscale = 32;  // How far apart they are
@@ -64,27 +65,6 @@ const CRGBPalette16 palettes[NUM_PALETTES] = {
     0x0000ff,
     0xff0000),
 };
-
-
-
-// Test palette
-CRGBPalette16 paletteFade = CRGBPalette16(
-  0x000000,
-  0xff0000,
-  0xff0000,
-  0x000000,
-  0x00ff00,
-  0x00ff00,
-  0x000000,
-  0x0000ff,
-  0x0000ff,
-  0x000000,
-  0xff0000,
-  0x000000,
-  0x00ff00,
-  0x000000,
-  0x0000ff,
-  0x000000);
 
 const uint8_t PROGMEM gamma8[] = {
     0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,
@@ -143,7 +123,7 @@ void Ledstrip::loop()
         palette = 0;
         mode++;
       }
-    } else if (mode+1 < NUM_MODES) {
+    } else if (mode+1 < NUM_MODES_BUTTON) {
       mode++;
     } else {
       // end of loop
@@ -272,10 +252,8 @@ void Ledstrip::loop()
       break;
     }
 
-    // *** After here only test patters
-
     // Show color palette.
-    case 10: {
+    case 5: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         uint16_t index = i*8;
         if (index <= 0xff) {
@@ -288,20 +266,6 @@ void Ledstrip::loop()
         } else {
           strip.setPixelColor(i, strip.Color(0, 0, 0, white));
         }
-      }
-      break;
-    }
-
-    // Fade test.
-    case 11: {
-      stripChanged = true; // TODO
-      for (uint8_t i=0; i<NUM_LEDS; i++) {
-        CRGB fl_rgb = ColorFromPalette16(paletteFade, uint16_t(i)*256+(millis()));
-        strip.setPixelColor(i,strip.Color(
-              applyGamma(fl_rgb.red),
-              applyGamma(fl_rgb.green),
-              applyGamma(fl_rgb.blue),
-              white));
       }
       break;
     }
@@ -343,7 +307,7 @@ void Ledstrip::sendState() const {
 
 void Ledstrip::gotMessage(uint8_t *arg) {
   stripChanged = true;
-  if (arg[0] < NUM_MODES) {
+  if (arg[0] < NUM_MODES_ALL) {
     mode = arg[0];
   }
   speed = arg[1]; // TODO: use a logarithmic scale for speed
