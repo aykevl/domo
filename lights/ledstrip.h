@@ -14,6 +14,7 @@ class Ledstrip {
   bool stripChanged = true;
   uint8_t mode;
   uint8_t speed; // slowness (higher is slower)
+  uint8_t spread; // higher is closer together
   uint8_t palette;
   uint8_t loopCounter = 0;
   bool buttonWasPressed = false;

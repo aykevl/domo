@@ -14,9 +14,6 @@
 const uint8_t NUM_MODES_BUTTON = 5;
 const uint8_t NUM_MODES_ALL = 6;
 
-// Mode 2
-const uint32_t noise_xscale = 32;  // How far apart they are
-
 // Mode 3:
 const uint16_t scale = 16;          // Wouldn't recommend changing this on the fly, or the animation will be really blocky.
 const uint8_t maxChanges = 48;      // Value for blending between palettes
@@ -99,6 +96,7 @@ void Ledstrip::begin()
 {
   mode = Settings.data.ledstrip_mode;
   speed = Settings.data.ledstrip_speed;
+  spread = Settings.data.ledstrip_spread;
   white = Settings.data.ledstrip_white;
   strip.setBrightness(BRIGHTNESS);
   strip.begin();
@@ -158,12 +156,15 @@ void Ledstrip::loop()
           }
         }
         stripChanged = true;
+
+        uint8_t color = rainbowColor;
         for (uint8_t i=0; i<NUM_LEDS; i++) {
           const CHSV fl_hsv = CHSV {
-            rainbowColor-i-i-i,
+            color,
             0xff,
             0xff,
           };
+          color -= spread/9;
           CRGB fl_rgb;
           hsv2rgb_rainbow(fl_hsv, fl_rgb);
           strip.setPixelColor(i, strip.Color(
@@ -191,7 +192,7 @@ void Ledstrip::loop()
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         // X location is constant, but we move along the Y at the rate of millis()
         //uint8_t index = inoise8(i*noise_xscale,millis()*noise_yscale*NUM_LEDS/255);
-        uint16_t index = inoise16(uint32_t(i)*256*noise_xscale, noiseYScale);
+        uint16_t index = inoise16(uint32_t(i)*128*spread, noiseYScale);
 
         CRGB fl_rgb = ColorFromPalette16(palettes[palette], index);
         strip.setPixelColor(i,strip.Color(
@@ -292,19 +293,21 @@ uint8_t Ledstrip::applyGamma(uint8_t value) const {
 void Ledstrip::save() const {
   Settings.data.ledstrip_mode = mode;
   Settings.data.ledstrip_speed = speed;
+  Settings.data.ledstrip_spread = spread;
   Settings.data.ledstrip_white = white;
   Settings.save(); // TODO: throttling
 }
 
 void Ledstrip::sendState() const {
-  uint8_t msg[6];
+  uint8_t msg[7];
   msg[0] = RADIO_MSG_LEDSTRIP;
   msg[1] = 0;
   uint8_t *arg = msg+2;
   arg[0] = mode;
   arg[1] = speed;
-  arg[2] = white;
-  arg[3] = palette;
+  arg[2] = spread;
+  arg[3] = white;
+  arg[4] = palette;
 
   if (!radioSend(msg, sizeof(msg))) {
     Serial.println(F("failed to send ledstrip message"));
@@ -316,10 +319,11 @@ void Ledstrip::gotMessage(uint8_t *arg) {
   if (arg[0] < NUM_MODES_ALL) {
     mode = arg[0];
   }
-  speed = arg[1]; // TODO: use a logarithmic scale for speed
-  white = arg[2];
-  if (arg[3] < NUM_PALETTES) {
-    palette = arg[3];
+  speed = arg[1];
+  spread = arg[2];
+  white = arg[3];
+  if (arg[4] < NUM_PALETTES) {
+    palette = arg[4];
   }
   save();
 }
