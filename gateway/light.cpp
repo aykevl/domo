@@ -26,7 +26,7 @@ void lightSend(const char *child, uint8_t *arg) {
       values["state"] = "on";
       break;
   }
-  values["enabled"] = bool(arg[0] & LIGHT_FLAG_ENABLED);
+  values["enabled"] = (arg[0] & LIGHT_FLAG_ENABLED) != 0;
   values["fullBrightness"] = arg[1] / 255.0;
   values["time"] = Time(arg[2], arg[3], 0).dayTime(); // hour, minute, second
   values["duration"] = (int32_t(arg[4]) + int32_t(arg[5]) * 256) * 60;
@@ -68,7 +68,7 @@ void lightReceive(uint8_t child, JsonObject &value) {
     }
   }
 
-  arg[0] |= (value["enabled"]) ? LIGHT_FLAG_ENABLED : 0;
+  arg[0] |= (bool(value["enabled"])) ? LIGHT_FLAG_ENABLED : 0;
   arg[1] = uint8_t(float(value["fullBrightness"]) * 255.5);
   Time time = Time(uint32_t(value["time"]));
   arg[2] = time.getHour();

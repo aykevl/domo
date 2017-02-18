@@ -34,6 +34,7 @@ void Light::setWakeup(int32_t hour, int32_t minute, int32_t duration, bool enabl
     settings->duration = duration;
   }
 
+  this->enabled = enabled;
   settings->enabled = enabled;
 
   Settings.save();
