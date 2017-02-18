@@ -24,6 +24,12 @@ void ledstripSend(uint8_t *arg) {
     case LEDSTRIP_NOISE:
       values["mode"] = "noise";
       break;
+    case LEDSTRIP_FLAME:
+      values["mode"] = "flame";
+      break;
+    case LEDSTRIP_FIRE:
+      values["mode"] = "fire";
+      break;
     case LEDSTRIP_WHITE:
       values["mode"] = "white";
       break;
@@ -61,6 +67,10 @@ void ledstripReceive(JsonObject &value) {
       arg[0] = LEDSTRIP_COLOR;
     } else if (strcmp(mode, "noise") == 0) {
       arg[0] = LEDSTRIP_NOISE;
+    } else if (strcmp(mode, "flame") == 0) {
+      arg[0] = LEDSTRIP_FLAME;
+    } else if (strcmp(mode, "fire") == 0) {
+      arg[0] = LEDSTRIP_FIRE;
     } else if (strcmp(mode, "white") == 0) {
       arg[0] = LEDSTRIP_WHITE;
     } else if (strcmp(mode, "palette") == 0) {

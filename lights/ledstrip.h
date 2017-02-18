@@ -7,10 +7,10 @@
 
 #define NUM_LEDS 30
 
-const uint8_t LEDSTRIP_FLAG_RAINBOW_REVERSE = 0b10000000;
-const uint8_t LEDSTRIP_FLAG_RAINBOW_RBG     = 0b01000000;
-const uint8_t LEDSTRIP_FLAG_SPARKLES        = 0b00100000;
-const uint8_t LEDSTRIP_MODE_MASK            = 0b00000111;
+const uint8_t LEDSTRIP_FLAG_REVERSE     = 0b10000000;
+const uint8_t LEDSTRIP_FLAG_RAINBOW_RBG = 0b01000000;
+const uint8_t LEDSTRIP_FLAG_SPARKLES    = 0b00100000;
+const uint8_t LEDSTRIP_MODE_MASK        = 0b00000111;
 
 
 class Ledstrip {
@@ -24,7 +24,7 @@ class Ledstrip {
   uint8_t palette;
   uint8_t white; // how much white is added
   bool sparkles;
-  bool rainbowReverseMovement;
+  bool reverse; // reverse the whole strip
   bool rainbowReverseColor;
   uint8_t loopCounter = 0;
   bool buttonWasPressed = false;
@@ -32,6 +32,8 @@ class Ledstrip {
   uint8_t rainbowColor = 0;
   uint32_t noiseMillis = 0;
   uint32_t noiseYScale = 0;
+  uint32_t fireMillis = 0;
+  uint32_t flameMillis = 0;
 
 public:
   Ledstrip(uint8_t pin, Button button);

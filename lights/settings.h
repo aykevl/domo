@@ -21,7 +21,7 @@ typedef struct {
   uint8_t ledstrip_white;
   uint8_t ledstrip_palette;
   uint8_t ledstrip_spread;
-  bool    ledstrip_rainbowReverseMovement;
+  bool    ledstrip_reverse;
   bool    ledstrip_rainbowReverseColor;
   bool    ledstrip_sparkles;
 } SettingsData;
@@ -55,7 +55,7 @@ class SettingsClass {
       data.ledstrip_white = 0;
       data.ledstrip_palette = 0;
       data.ledstrip_spread = 32;
-      data.ledstrip_rainbowReverseMovement = false;
+      data.ledstrip_reverse = false;
       data.ledstrip_rainbowReverseColor = false;
       data.ledstrip_sparkles = false;
     }

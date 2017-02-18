@@ -11,10 +11,15 @@
 
 #define BRIGHTNESS 255
 
-const uint8_t NUM_MODES_BUTTON = 4;
-const uint8_t NUM_MODES_ALL = 5;
+const uint8_t FIRE_SPARKING = 120;
+uint8_t flameHeat[NUM_LEDS];
+uint8_t fireHeat[NUM_LEDS];
+uint8_t fireSparks[NUM_LEDS];
 
-const uint8_t NUM_PALETTES = 3;
+const uint8_t NUM_MODES_BUTTON = 6;
+const uint8_t NUM_MODES_ALL = 7;
+
+const uint8_t NUM_PALETTES = 4;
 const CRGBPalette16 palettes[NUM_PALETTES] = {
   CRGBPalette16( // red-blue, green-red
     0x000000,
@@ -55,6 +60,7 @@ const CRGBPalette16 palettes[NUM_PALETTES] = {
     0x00ff00,
     0x0000ff,
     0xff0000),
+  HeatColors_p,
 };
 
 const uint8_t PROGMEM gamma8[] = {
@@ -92,6 +98,7 @@ void Ledstrip::begin()
   mode = Settings.data.ledstrip_mode;
   speed = Settings.data.ledstrip_speed;
   spread = Settings.data.ledstrip_spread;
+  palette = Settings.data.ledstrip_palette;
   white = Settings.data.ledstrip_white;
   sparkles = Settings.data.ledstrip_sparkles;
   strip.setBrightness(BRIGHTNESS);
@@ -143,7 +150,7 @@ void Ledstrip::loop()
       if (stripChanged || currentMillis - rainbowMillis >= uint32_t(speed)*4) {
         stripChanged = true;
         if (speed != 0xff) {
-          if (rainbowReverseMovement) {
+          if (reverse) {
             rainbowColor--;
           } else {
             rainbowColor++;
@@ -208,7 +215,102 @@ void Ledstrip::loop()
       break;
     }
 
-    case 3: { // white
+    case 3: {
+      // Source:
+      // https://github.com/FastLED/FastLED/blob/master/examples/Fire2012/Fire2012.ino
+      uint32_t currentMillis = millis();
+      if (currentMillis - flameMillis > speed) {
+        flameMillis = currentMillis;
+        stripChanged = true;
+
+        // Step 1.  Cool down every cell a little
+        for (uint8_t i = 0; i < NUM_LEDS; i++) {
+          flameHeat[i] = qsub8(flameHeat[i], random8(0, (((255-spread) * 10) / NUM_LEDS) + 2));
+        }
+
+        // Step 2.  Heat from each cell drifts 'up' and diffuses a little
+        for (uint8_t i = NUM_LEDS - 1; i >= 2; i--) {
+          flameHeat[i] = (flameHeat[i - 1] + flameHeat[i - 2] + flameHeat[i - 2] ) / 3;
+        }
+
+        // Step 3.  Randomly ignite new 'sparks' of flameHeat near the bottom
+        if( random8() < FIRE_SPARKING ) {
+          uint8_t y = random8(4);
+          flameHeat[y] = qadd8( flameHeat[y], random8(160,255) );
+        }
+
+        // Step 4.  Map from heat cells to LED colors
+        for (uint8_t i = 0; i < NUM_LEDS; i++) {
+          uint8_t colorindex = scale8(flameHeat[i], 200);
+          CRGB color = ColorFromPalette(palettes[palette], colorindex);
+          uint8_t pixelnumber;
+          if (reverse) {
+            pixelnumber = (NUM_LEDS-1) - i;
+          } else {
+            pixelnumber = i;
+          }
+          strip.setPixelColor(pixelnumber, strip.Color(
+                color.red,
+                color.green,
+                color.blue,
+                white));
+        }
+      }
+      break;
+    }
+
+    case 4: {
+      uint32_t currentMillis = millis();
+      if (currentMillis - fireMillis > speed) {
+        fireMillis = currentMillis;
+        stripChanged = true;
+
+        // Cool down every cell a little
+        for (uint8_t i=0; i < NUM_LEDS; i++) {
+          fireHeat[i] = qsub8(fireHeat[i], random8(0, 5));
+        }
+
+        // Generate random sparks
+        for (uint8_t i=0; i < NUM_LEDS; i++) {
+          if (random8() < 16) {
+            fireSparks[i] = qadd8(fireHeat[i], random8(2, 32));
+          }
+        }
+
+        // Insert spark into heat cell
+        for (uint8_t i=0; i < NUM_LEDS; i++) {
+          if (fireSparks[i]) {
+            fireHeat[i] = qadd8(fireHeat[i], random8(0, 5));
+            fireSparks[i]--;
+          }
+        }
+
+        // Let the heat flow a bit to the side
+        for (uint8_t i=0; i < NUM_LEDS; i++) {
+          if (random8() < 16) {
+            if (fireHeat[i] > qadd8(fireHeat[(i+1)%NUM_LEDS], 32)) {
+              fireHeat[(i+1)%NUM_LEDS] += 1;
+            }
+            if (fireHeat[i] > qadd8(fireHeat[(i-1)%NUM_LEDS], 32)) {
+              fireHeat[(i-1)%NUM_LEDS] += 1;
+            }
+          }
+        }
+
+        for (uint8_t i=0; i < NUM_LEDS; i++) {
+          uint8_t index = scale8(fireHeat[i], 96) + 16;
+          CRGB color = ColorFromPalette(HeatColors_p, index);
+          strip.setPixelColor(i, strip.Color(
+                color.red,
+                color.green,
+                color.blue,
+                white));
+        }
+      }
+      break;
+    }
+
+    case 5: { // white
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
       }
@@ -216,7 +318,7 @@ void Ledstrip::loop()
     }
 
     // Show color palette.
-    case 4: {
+    case 6: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         uint16_t index = i*8;
         if (index <= 0xff) {
@@ -283,9 +385,10 @@ void Ledstrip::save() const {
   Settings.data.ledstrip_mode = mode;
   Settings.data.ledstrip_speed = speed;
   Settings.data.ledstrip_spread = spread;
+  Settings.data.ledstrip_palette = palette;
   Settings.data.ledstrip_white = white;
   Settings.data.ledstrip_sparkles = sparkles;
-  Settings.data.ledstrip_rainbowReverseMovement = rainbowReverseMovement;
+  Settings.data.ledstrip_reverse = reverse;
   Settings.data.ledstrip_rainbowReverseColor = rainbowReverseColor;
   Settings.save(); // TODO: throttling
 }
@@ -299,8 +402,8 @@ void Ledstrip::sendState() const {
   if (sparkles) {
     arg[0] |= LEDSTRIP_FLAG_SPARKLES;
   }
-  if (rainbowReverseMovement) {
-    arg[0] |= LEDSTRIP_FLAG_RAINBOW_REVERSE;
+  if (reverse) {
+    arg[0] |= LEDSTRIP_FLAG_REVERSE;
   }
   if (rainbowReverseColor) {
     arg[0] |= LEDSTRIP_FLAG_RAINBOW_RBG;
@@ -321,7 +424,7 @@ void Ledstrip::gotMessage(uint8_t *arg) {
     mode = arg[0] & LEDSTRIP_MODE_MASK;
   }
   sparkles = (arg[0] & LEDSTRIP_FLAG_SPARKLES) != 0;
-  rainbowReverseMovement = (arg[0] & LEDSTRIP_FLAG_RAINBOW_REVERSE) != 0;
+  reverse = (arg[0] & LEDSTRIP_FLAG_REVERSE) != 0;
   rainbowReverseColor = (arg[0] & LEDSTRIP_FLAG_RAINBOW_RBG) != 0;
   speed = arg[1];
   spread = arg[2];
