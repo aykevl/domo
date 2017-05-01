@@ -3,8 +3,8 @@
 // Unique ID within the LAN and on the MQTT broker.
 #define CLIENT_ID "gateway"
 
-#define TIME_URL "https://aykevl.nl/api/time"
-#define TIME_FINGERPRINT "0D:CA:9C:A0:41:B4:8E:5F:F1:C5:62:48:4B:A0:BC:61:9A:B5:5F:FE"
+#define TIME_URL "http://notls.aykevl.nl/api/time"
+//#define TIME_FINGERPRINT "00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00" // fill in the certificate fingerprint
 
 // MQTT connection config.
 #define MQTT_HOST "aykevl.nl"

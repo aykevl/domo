@@ -139,7 +139,11 @@ void ClockClass::loop() {
 #ifdef SERIAL_ENABLED
     Serial.println("Clock: requesting time...");
 #endif
+#ifdef TIME_FINGERPRINT
     http.begin(TIME_URL, TIME_FINGERPRINT);
+#else
+    http.begin(TIME_URL);
+#endif
 
     int httpCode = http.GET();
     if (httpCode == 200) {
