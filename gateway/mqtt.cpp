@@ -35,7 +35,7 @@ void mqttLoop() {
     if (mqttLastTry == 0 || currentMillis - mqttLastTry > 5000) {
       mqttLastTry = currentMillis;
       if (mqtt.connect(CLIENT_ID, MQTT_LOG, 1, false, MQTT_MSG_OFFLINE)) {
-        mqtt.publish(MQTT_LOG, MQTT_MSG_ONLINE);
+        log(MQTT_MSG_ONLINE);
         if (!mqtt.subscribe(MQTT_PREFIX "a/+", 1)) {
           log(F("failed to subscribe"));
         }

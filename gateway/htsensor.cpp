@@ -41,4 +41,8 @@ void htsensorSend(uint8_t *arg) {
     const size_t msgLen = root.printTo(msg, msgMaxLen);
     mqtt.publish(MQTT_PREFIX "s/humidity", msg);
   }
+
+  if (isnan(temperature) || isnan(humidity)) {
+    log("temperature and/or humidity is invalid");
+  }
 }

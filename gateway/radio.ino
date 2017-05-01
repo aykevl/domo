@@ -38,29 +38,40 @@ void radioLoop() {
     bool request = msg[0] >> 7;      // take the most significant bit (as 0 or 1)
     uint8_t command = msg[0] & 0x7f; // take all other bits
     uint8_t child = msg[1];
-    uint8_t *arg = msg+2;            // the rest of the data (30 bytes) is the argument
+    uint8_t *arg = msg + 2;          // the rest of the data (30 bytes) is the argument
 
     if (request) {
       switch (command) {
         case RADIO_MSG_TIME:
+          log("radio got time request");
           radioSendTime();
+          break;
+        default:
+          log("radio got unknown request");
           break;
       }
     } else {
       switch (command) {
         case RADIO_MSG_COLOR:
+          log("radio got color");
           colorLightSend(arg);
           break;
         case RADIO_MSG_LIGHT:
+          log("radio got light");
           if (child > 0 && child < CHILDREN_LEN) {
             lightSend(CHILDREN[child], arg);
           }
           break;
         case RADIO_MSG_HT:
+          log("radio got sensor value");
           htsensorSend(arg);
           break;
         case RADIO_MSG_LEDSTRIP:
+          log("radio got ledstrip value");
           ledstripSend(arg);
+          break;
+        default:
+          log("radio got unknown command");
           break;
       }
     }
@@ -77,7 +88,7 @@ void radioLoop() {
       }
 
       uint32_t elapsed = millis() - startMillis;
-      if (elapsed > stage*100) { // do one stage per 100ms
+      if (elapsed > stage * 100) { // do one stage per 100ms
         uint8_t msg[2];
         if (stage == 1 || stage == 2) {
           msg[0] = RADIO_MSG_LIGHT | RADIO_MSG_REQUEST;
@@ -115,8 +126,8 @@ void radioSendTime() {
   msg[1] = 0;
 
   // 4 bytes for the time, in little-endian format
-  for (uint8_t i=0; i<4; i++) {
-    msg[2+i] = uint8_t(timestamp);
+  for (uint8_t i = 0; i < 4; i++) {
+    msg[2 + i] = uint8_t(timestamp);
     timestamp >>= 8;
   }
 
