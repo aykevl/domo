@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include "time.h"
 #include "settings.h"
+#include "config.h"
 
 typedef enum {
   LIGHT_UNDEFINED,

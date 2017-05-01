@@ -18,4 +18,5 @@
 #define RF24_ADDRESS 0x00000000
 #define RF24_CHANNEL 71
 
-#define SERIAL_ENABLED 1
+// When serial is enabled, the rotary button will be disabled (they use the same pin).
+//#define SERIAL_ENABLED 1

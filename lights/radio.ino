@@ -44,9 +44,13 @@ void radioLoop() {
   uint8_t child = msg[1];          // child or subdevice number (starting from 1)
   uint8_t *arg = msg+2;            // the rest of the data (30 bytes) is the argument
 
+#ifdef USE_SERIAL
   Serial.println("got message");
+#endif
   if (request) {
+#ifdef USE_SERIAL
     Serial.println("got request");
+#endif
     switch (command) {
       case RADIO_MSG_LIGHT:
         if (child == 1) {
@@ -81,11 +85,17 @@ void radioLoop() {
 }
 
 void radioRequestTime() {
+#ifdef USE_SERIAL
   Serial.println("requesting time");
+#endif
   uint8_t msg[2];
   msg[0] = RADIO_MSG_TIME | RADIO_MSG_REQUEST;
   msg[1] = 0;
-  radioSend(msg, sizeof(msg));
+  if (!radioSend(msg, sizeof(msg))) {
+#ifdef USE_SERIAL
+  Serial.println("failed to request time");
+#endif
+  }
 }
 
 void radioRecvTime(uint8_t *arg) {
@@ -94,8 +104,10 @@ void radioRecvTime(uint8_t *arg) {
     timestamp <<= 8;
     timestamp |= arg[i-1];
   }
+#ifdef USE_SERIAL
   Serial.print(F("time: "));
   Serial.println(timestamp);
+#endif
   Clock.setTime(timestamp); // updated time
 }
 

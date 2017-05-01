@@ -414,12 +414,16 @@ void Ledstrip::sendState() const {
   arg[4] = palette;
 
   if (!radioSend(msg, sizeof(msg))) {
+#ifdef USE_SERIAL
     Serial.println(F("failed to send ledstrip message"));
+#endif
   }
 }
 
 void Ledstrip::gotMessage(uint8_t *arg) {
+#ifdef USE_SERIAL
   Serial.println(arg[0], BIN);
+#endif
   if ((arg[0] & LEDSTRIP_MODE_MASK) < NUM_MODES_ALL) {
     mode = arg[0] & LEDSTRIP_MODE_MASK;
   }

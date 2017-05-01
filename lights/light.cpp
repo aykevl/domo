@@ -202,7 +202,9 @@ void Light::sendState() {
   arg[5] = dur / 256;
 
   if (!radioSend(msg, sizeof(msg))) {
+#ifdef USE_SERIAL
     Serial.println(F("failed to send light message"));
+#endif
   }
 }
 

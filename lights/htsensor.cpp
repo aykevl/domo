@@ -3,6 +3,7 @@
 #include <DHT.h>
 
 #include "radio.h"
+#include "config.h"
 
 const uint8_t DHT_PIN = 7;
 const uint32_t DHT_INTERVAL = 60000; // 1 minute
@@ -46,6 +47,8 @@ void htsensorLoop() {
   htsensorEncode(&arg[6], humidity);
 
   if (!radioSend(msg, sizeof(msg))) {
+#ifdef USE_SERIAL
     Serial.println(F("failed to send DHT message"));
+#endif
   }
 }

@@ -83,7 +83,10 @@ void amplifierChangeVolume(int8_t change) {
 }
 
 void amplifierSetup() {
+  // Rotary buttons and serial use the same pins, so disable rotary when serial is enabled.
+#ifndef SERIAL_ENABLED
   rotarySetup();
+#endif
   Wire.begin(AMPLIFIER_SDA, AMPLIFIER_SCL);
   pinMode(AMPLIFIER_LED_PIN, OUTPUT);
 
@@ -104,7 +107,9 @@ void amplifierLoop() {
   buttonWasPressed = buttonPressed;
 
   static int8_t counter = 0;
+#ifndef SERIAL_ENABLED
   counter += rotaryRead();
+#endif
   if (counter >= 2) {
     counter -= 2;
     amplifierChangeVolume(1);
