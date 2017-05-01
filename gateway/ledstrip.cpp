@@ -37,7 +37,7 @@ void ledstripSend(uint8_t *arg) {
   values["sparkles"] = (arg[0] & LEDSTRIP_FLAG_SPARKLES) != 0;
   values["rainbowBackwards"] = (arg[0] & LEDSTRIP_FLAG_RAINBOW_REVERSE) != 0;
   values["rainbowRBG"] = (arg[0] & LEDSTRIP_FLAG_RAINBOW_RBG) != 0;
-  values["slowness"] = arg[1];
+  values["speed"] = arg[1];
   values["spread"] = float(arg[2]) / 255.0;
   values["white"] = float(arg[3]) / 255.0;
   values["palette"] = arg[4];
