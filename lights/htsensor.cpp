@@ -5,7 +5,7 @@
 #include "radio.h"
 #include "config.h"
 
-const uint8_t DHT_PIN = 7;
+const uint8_t DHT_PIN = A1;
 const uint32_t DHT_INTERVAL = 60000; // 1 minute
 
 DHT dht(DHT_PIN, DHT22);

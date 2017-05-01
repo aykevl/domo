@@ -50,8 +50,8 @@ class SettingsClass {
       };
       data.light1 = light;
       data.light2 = light;
-      data.ledstrip_mode = 0;
-      data.ledstrip_speed = 32;
+      data.ledstrip_mode = 1;
+      data.ledstrip_speed = 3;
       data.ledstrip_white = 0;
       data.ledstrip_palette = 0;
       data.ledstrip_spread = 32;

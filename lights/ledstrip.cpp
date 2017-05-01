@@ -2,43 +2,26 @@
 #include "ledstrip.h"
 #include "math.h"
 #include "settings.h"
+#include "config.h"
 #include "radio.h"
 
-#include <hsv2rgb.h> // FastLED
 #ifdef __AVR__
   #include <avr/power.h>
 #endif
 
 #define BRIGHTNESS 255
 
-const uint8_t FIRE_SPARKING = 120;
 uint8_t flameHeat[NUM_LEDS];
-uint8_t fireHeat[NUM_LEDS];
-uint8_t fireSparks[NUM_LEDS];
+
+#define FLAME_SPEED (1000 / 60) // 60fps, or 16ms per frame
+#define FLAME_COOLING 30
+#define FLAME_SPARKING 120
 
 const uint8_t NUM_MODES_BUTTON = 6;
 const uint8_t NUM_MODES_ALL = 7;
 
-const uint8_t NUM_PALETTES = 4;
-const CRGBPalette16 palettes[NUM_PALETTES] = {
-  CRGBPalette16( // red-blue, green-red
-    0x000000,
-    0x000000,
-    0xff0000,
-    0xff8800,
-    0x66aa00,
-    0x000000,
-    0x000000,
-    0x000088,
-    0x0000ff,
-    0x8800ee,
-    0x9900cc,
-    0xff00aa,
-    0xff0088,
-    0xff0044,
-    0xff0000,
-    0xff3300),
-  CRGBPalette16( // red-blue
+const TProgmemRGBPalette16 RedBlueColors_p FL_PROGMEM =
+{
     0xff6600,
     0xff3300,
     0xff0000,
@@ -54,13 +37,27 @@ const CRGBPalette16 palettes[NUM_PALETTES] = {
     0x0000ff,
     0x2222ff,
     0x4444ff,
-    0x6666ff),
-  CRGBPalette16( // RGB
+    0x6666ff
+};
+
+const TProgmemRGBPalette16 RedYellowColors_p FL_PROGMEM =
+{
+    0xff0088,
+    0xff0066,
+    0xff0044,
+    0xff0022,
     0xff0000,
-    0x00ff00,
-    0x0000ff,
-    0xff0000),
-  HeatColors_p,
+    0xff1100,
+    0xff2200,
+    0xee3300,
+    0xdd4400,
+    0xcc5500,
+    0xbb6600,
+    0xaa7700,
+    0x998800,
+    0x889900,
+    0x77aa00,
+    0x66bb00,
 };
 
 const uint8_t PROGMEM gamma8[] = {
@@ -84,9 +81,8 @@ const uint8_t PROGMEM gamma8[] = {
 
 
 
-Ledstrip::Ledstrip(uint8_t pin, Button button) :
-  strip(Adafruit_NeoPixel(NUM_LEDS, pin, NEO_GRBW + NEO_KHZ800)),
-  button(button)
+Ledstrip::Ledstrip(uint8_t pin) :
+  strip(Adafruit_NeoPixel(NUM_LEDS, pin, NEO_GRBW + NEO_KHZ800))
 {
   #if defined (__AVR_ATtiny85__)
     if (F_CPU == 16000000) clock_prescale_set(clock_div_1);
@@ -98,7 +94,7 @@ void Ledstrip::begin()
   mode = Settings.data.ledstrip_mode;
   speed = Settings.data.ledstrip_speed;
   spread = Settings.data.ledstrip_spread;
-  palette = Settings.data.ledstrip_palette;
+  loadPalette(Settings.data.ledstrip_palette);
   white = Settings.data.ledstrip_white;
   sparkles = Settings.data.ledstrip_sparkles;
   strip.setBrightness(BRIGHTNESS);
@@ -107,37 +103,9 @@ void Ledstrip::begin()
 
 void Ledstrip::loop()
 {
-  // Count numer of loops since start.
-  loopCounter++;
-
-  // Go to next mode on keypress.
-  button.loop();
-  bool buttonPressed = button.pressed();
-  if (buttonPressed && !buttonWasPressed) {
-    // Registered a press!
-    if (mode == 2) {
-      // loop through palettes when in color palette mode
-      if (palette+1 < NUM_PALETTES) {
-        palette++;
-      } else {
-        palette = 0;
-        mode++;
-      }
-    } else if (mode+1 < NUM_MODES_BUTTON) {
-      mode++;
-    } else {
-      // end of loop
-      mode = 0;
-    }
-    stripChanged = true;
-    save();
-    sendState();
-  }
-  buttonWasPressed = buttonPressed;
-
   switch (mode) {
     // Turn off the LED strip.
-    case 0: {
+    case MODE_OFF: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0, 0));
       }
@@ -145,59 +113,51 @@ void Ledstrip::loop()
     }
 
     // Show moving rainbow colors.
-    case 1: {
-      uint32_t currentMillis = millis();
-      if (stripChanged || currentMillis - rainbowMillis >= uint32_t(speed)*4) {
+    case MODE_RAINBOW: {
+      uint8_t currentMillis = millis();
+      if (uint8_t(currentMillis - lastMillis) >= uint8_t(0xe0 >> speed)) { // may also be: 7 << speed
         stripChanged = true;
-        if (speed != 0xff) {
-          if (reverse) {
-            rainbowColor--;
-          } else {
-            rainbowColor++;
-          }
-          if (currentMillis - rainbowMillis > uint32_t(speed)*4*2) {
-            // we're just getting into this mode (or there was a long delay)
-            rainbowMillis = currentMillis;
-          } else {
-            // we were already in this mode
-            rainbowMillis += uint32_t(speed)*4;
-          }
+        lastMillis = currentMillis;
+        if ((!reverse != !rainbowReverseColor)) {
+          rainbowColor--;
+        } else {
+          rainbowColor++;
         }
-
       }
 
       uint8_t color = rainbowColor;
-      for (uint8_t i=0; i<NUM_LEDS; i++) {
-        const CHSV fl_hsv = CHSV {
+      uint8_t i = NUM_LEDS;
+      do {
+        i--;
+        CRGB led = CHSV {
           color,
           0xff,
           0xff,
         };
         if (rainbowReverseColor) {
-          color += spread/9;
-        } else {
           color -= spread/9;
+        } else {
+          color += spread/9;
         }
-        CRGB fl_rgb;
-        hsv2rgb_rainbow(fl_hsv, fl_rgb);
         strip.setPixelColor(i, strip.Color(
-              fl_rgb.red,
-              fl_rgb.green,
-              fl_rgb.blue,
+              led.red,
+              led.green,
+              led.blue,
               white));
-      }
+      } while (i);
+
       break;
     }
 
     // Show noise based on color palette.
-    case 2:
+    case MODE_NOISE:
     {
       // Move along the Y axis (time).
-      uint32_t currentMillis = millis();
-      if (currentMillis - noiseMillis > speed) {
+      uint8_t currentMillis = millis();
+      if (uint8_t(currentMillis - lastMillis) > 8) {
         stripChanged = true;
-        noiseMillis = currentMillis;
-        noiseYScale += 256;
+        lastMillis = currentMillis;
+        noiseYScale += uint16_t(63) << speed;
       }
 
       for (uint8_t i=0; i<NUM_LEDS; i++) {
@@ -205,7 +165,7 @@ void Ledstrip::loop()
         //uint8_t index = inoise8(i*noise_xscale,millis()*noise_yscale*NUM_LEDS/255);
         uint16_t index = inoise16(uint32_t(i)*128*spread, noiseYScale);
 
-        CRGB fl_rgb = ColorFromPalette16(palettes[palette], index);
+        CRGB fl_rgb = ColorFromPalette16(palette, index);
         strip.setPixelColor(i,strip.Color(
               applyGamma(fl_rgb.red),
               applyGamma(fl_rgb.green),
@@ -215,18 +175,11 @@ void Ledstrip::loop()
       break;
     }
 
-    case 3: {
-      // Source:
-      // https://github.com/FastLED/FastLED/blob/master/examples/Fire2012/Fire2012.ino
-      uint32_t currentMillis = millis();
-      if (currentMillis - flameMillis > speed) {
-        flameMillis = currentMillis;
+    case MODE_FLAME: {
+      uint8_t currentMillis = millis();
+      if (uint8_t(currentMillis - lastMillis) > 8) {
         stripChanged = true;
-
-        // Step 1.  Cool down every cell a little
-        for (uint8_t i = 0; i < NUM_LEDS; i++) {
-          flameHeat[i] = qsub8(flameHeat[i], random8(0, (((255-spread) * 10) / NUM_LEDS) + 2));
-        }
+        lastMillis = currentMillis;
 
         // Step 2.  Heat from each cell drifts 'up' and diffuses a little
         for (uint8_t i = NUM_LEDS - 1; i >= 2; i--) {
@@ -234,83 +187,35 @@ void Ledstrip::loop()
         }
 
         // Step 3.  Randomly ignite new 'sparks' of flameHeat near the bottom
-        if( random8() < FIRE_SPARKING ) {
+        if (random8() < FLAME_SPARKING) {
           uint8_t y = random8(4);
-          flameHeat[y] = qadd8( flameHeat[y], random8(160,255) );
+          flameHeat[y] = qadd8( flameHeat[y], random8(160, 255) );
         }
 
         // Step 4.  Map from heat cells to LED colors
         for (uint8_t i = 0; i < NUM_LEDS; i++) {
-          uint8_t colorindex = scale8(flameHeat[i], 200);
-          CRGB color = ColorFromPalette(palettes[palette], colorindex);
-          uint8_t pixelnumber;
-          if (reverse) {
-            pixelnumber = (NUM_LEDS-1) - i;
-          } else {
-            pixelnumber = i;
-          }
-          strip.setPixelColor(pixelnumber, strip.Color(
-                color.red,
-                color.green,
-                color.blue,
-                white));
-        }
-      }
-      break;
-    }
-
-    case 4: {
-      uint32_t currentMillis = millis();
-      if (currentMillis - fireMillis > speed) {
-        fireMillis = currentMillis;
-        stripChanged = true;
-
-        // Cool down every cell a little
-        for (uint8_t i=0; i < NUM_LEDS; i++) {
-          fireHeat[i] = qsub8(fireHeat[i], random8(0, 5));
-        }
-
-        // Generate random sparks
-        for (uint8_t i=0; i < NUM_LEDS; i++) {
-          if (random8() < 16) {
-            fireSparks[i] = qadd8(fireHeat[i], random8(2, 32));
-          }
-        }
-
-        // Insert spark into heat cell
-        for (uint8_t i=0; i < NUM_LEDS; i++) {
-          if (fireSparks[i]) {
-            fireHeat[i] = qadd8(fireHeat[i], random8(0, 5));
-            fireSparks[i]--;
-          }
-        }
-
-        // Let the heat flow a bit to the side
-        for (uint8_t i=0; i < NUM_LEDS; i++) {
-          if (random8() < 16) {
-            if (fireHeat[i] > qadd8(fireHeat[(i+1)%NUM_LEDS], 32)) {
-              fireHeat[(i+1)%NUM_LEDS] += 1;
-            }
-            if (fireHeat[i] > qadd8(fireHeat[(i-1)%NUM_LEDS], 32)) {
-              fireHeat[(i-1)%NUM_LEDS] += 1;
-            }
-          }
-        }
-
-        for (uint8_t i=0; i < NUM_LEDS; i++) {
-          uint8_t index = scale8(fireHeat[i], 96) + 16;
-          CRGB color = ColorFromPalette(HeatColors_p, index);
+          //uint8_t colorindex = scale8(flameHeat[i], 200);
+          //leds[i] = ColorFromPalette(palette, colorindex);
+          // Optimization: use HeatColor instead of ColorFromPalette.
+          // When we use HeatColors_p somewhere else in the sketch, it's
+          // probably more space-efficient to use ColorFromPalette16.
+          CRGB color = HeatColor(flameHeat[i]);
           strip.setPixelColor(i, strip.Color(
                 color.red,
                 color.green,
                 color.blue,
                 white));
+
+          // Step 1.  Cool down every cell a little
+          // Optimization: do this in the same loop here.
+          flameHeat[i] = qsub8(flameHeat[i], random8(0, (FLAME_COOLING + 2)));
         }
       }
+
       break;
     }
 
-    case 5: { // white
+    case MODE_WHITE: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         strip.setPixelColor(i, strip.Color(0, 0, 0, 255));
       }
@@ -318,11 +223,11 @@ void Ledstrip::loop()
     }
 
     // Show color palette.
-    case 6: {
+    case MODE_PALETTE: {
       for (uint8_t i=0; i<NUM_LEDS; i++) {
         uint16_t index = i*8;
         if (index <= 0xff) {
-          CRGB fl_rgb = ColorFromPalette(palettes[palette], index);
+          CRGB fl_rgb = ColorFromPalette(palette, index);
           strip.setPixelColor(i, strip.Color(
                 applyGamma(fl_rgb.red),
                 applyGamma(fl_rgb.green),
@@ -339,7 +244,7 @@ void Ledstrip::loop()
   // Display sparkle-like flickering
   if (sparkles) {
     stripChanged = true;
-    uint32_t currentMillis = millis();
+    uint16_t currentMillis = millis();
     for (uint8_t i=0; i<NUM_LEDS; i++) {
       // Vary the intensity of the flickering over time and distance.
       uint8_t intensity = inoise8(currentMillis / 4, uint16_t(i)*8);
@@ -381,11 +286,35 @@ uint8_t Ledstrip::applyGamma(uint8_t value) const {
   return pgm_read_byte(gamma8 + value);
 }
 
+void Ledstrip::loadPalette(palette_t index) {
+  this->paletteIndex = index;
+  switch (index) {
+    case PALETTE_Rainbow:
+      palette = RainbowColors_p;
+      break;
+    case PALETTE_Heat:
+      palette = HeatColors_p;
+      break;
+    case PALETTE_Lava:
+      palette = LavaColors_p;
+      break;
+    case PALETTE_RedBlue:
+      palette = RedBlueColors_p;
+      break;
+    case PALETTE_RedYellow:
+      palette = RedYellowColors_p;
+      break;
+    case PALETTE_Ocean:
+      palette = OceanColors_p;
+      break;
+  }
+}
+
 void Ledstrip::save() const {
   Settings.data.ledstrip_mode = mode;
   Settings.data.ledstrip_speed = speed;
   Settings.data.ledstrip_spread = spread;
-  Settings.data.ledstrip_palette = palette;
+  Settings.data.ledstrip_palette = paletteIndex;
   Settings.data.ledstrip_white = white;
   Settings.data.ledstrip_sparkles = sparkles;
   Settings.data.ledstrip_reverse = reverse;
@@ -411,7 +340,7 @@ void Ledstrip::sendState() const {
   arg[1] = speed;
   arg[2] = spread;
   arg[3] = white;
-  arg[4] = palette;
+  arg[4] = paletteIndex;
 
   if (!radioSend(msg, sizeof(msg))) {
 #ifdef USE_SERIAL
@@ -433,8 +362,8 @@ void Ledstrip::gotMessage(uint8_t *arg) {
   speed = arg[1];
   spread = arg[2];
   white = arg[3];
-  if (arg[4] < NUM_PALETTES) {
-    palette = arg[4];
+  if (arg[4] < PALETTE_EOF) {
+    loadPalette(arg[4]);
   }
 
   stripChanged = true;
