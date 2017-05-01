@@ -16,6 +16,9 @@ const char *CHILDREN[CHILDREN_LEN] = {NULL, "wakeup", "readinglight"};
 RF24 radio(D4, D8);
 
 void radioSetup() {
+#ifndef RADIO_ENABLED
+  return;
+#endif
   radio.begin();
   radio.setPALevel(RF24_PA_LOW);
   radio.openReadingPipe(1, (const uint8_t*) "\x00" RF24_ADDRESS);
@@ -25,6 +28,9 @@ void radioSetup() {
 }
 
 void radioLoop() {
+#ifndef RADIO_ENABLED
+  return;
+#endif
   if (radio.available()) {
     uint8_t msg[32];
     radio.read(msg, 32);
@@ -120,6 +126,9 @@ void radioSendTime() {
 }
 
 bool radioSend(uint8_t *msg, size_t length) {
+#ifndef RADIO_ENABLED
+  return false;
+#endif
   // Send the message via the nRF24L01.
   radio.stopListening();
   bool success = radio.write(msg, length);

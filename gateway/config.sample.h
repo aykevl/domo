@@ -20,3 +20,6 @@
 
 // When serial is enabled, the rotary button will be disabled (they use the same pin).
 //#define SERIAL_ENABLED 1
+
+// It looks like the ESP crashes as soon as the radio is enabled when it isn't available.
+#define RADIO_ENABLED 1
