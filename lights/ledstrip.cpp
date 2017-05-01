@@ -9,8 +9,6 @@
   #include <avr/power.h>
 #endif
 
-#define BRIGHTNESS 255
-
 uint8_t flameHeat[NUM_LEDS];
 
 #define FLAME_SPEED (1000 / 60) // 60fps, or 16ms per frame
@@ -97,8 +95,18 @@ void Ledstrip::begin()
   loadPalette(Settings.data.ledstrip_palette);
   white = Settings.data.ledstrip_white;
   sparkles = Settings.data.ledstrip_sparkles;
-  strip.setBrightness(BRIGHTNESS);
+  updateBrightness(Settings.data.ledstrip_dim);
   strip.begin();
+}
+
+void Ledstrip::updateBrightness(uint8_t dim)
+{
+  if (dim > 20) {
+    dim = 20;
+  }
+  this->dim = dim;
+  uint8_t brightness = pgm_read_byte(gamma8 + (0xff - dim * 10));
+  strip.setBrightness(brightness);
 }
 
 void Ledstrip::loop()
@@ -323,7 +331,7 @@ void Ledstrip::save() const {
 }
 
 void Ledstrip::sendState() const {
-  uint8_t msg[7];
+  uint8_t msg[8];
   msg[0] = RADIO_MSG_LEDSTRIP;
   msg[1] = 0;
   uint8_t *arg = msg+2;
@@ -341,6 +349,7 @@ void Ledstrip::sendState() const {
   arg[2] = spread;
   arg[3] = white;
   arg[4] = paletteIndex;
+  arg[5] = dim;
 
   if (!radioSend(msg, sizeof(msg))) {
 #ifdef USE_SERIAL
@@ -364,6 +373,9 @@ void Ledstrip::gotMessage(uint8_t *arg) {
   white = arg[3];
   if (arg[4] < PALETTE_EOF) {
     loadPalette(arg[4]);
+  }
+  if (arg[5] != dim) {
+    updateBrightness(arg[5]);
   }
 
   stripChanged = true;

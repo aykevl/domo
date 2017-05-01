@@ -41,6 +41,7 @@ void ledstripSend(uint8_t *arg) {
   values["spread"] = float(arg[2]) / 255.0;
   values["white"] = float(arg[3]) / 255.0;
   values["palette"] = arg[4];
+  values["dim"] = arg[5];
 
   const size_t messageMaxLen = 192; // TODO determine
   uint8_t message[messageMaxLen];
@@ -50,7 +51,7 @@ void ledstripSend(uint8_t *arg) {
 }
 
 void ledstripReceive(JsonObject &value) {
-  uint8_t msg[7];
+  uint8_t msg[8];
   msg[0] = RADIO_MSG_LEDSTRIP;
   msg[1] = 0;
 
@@ -87,6 +88,7 @@ void ledstripReceive(JsonObject &value) {
   arg[2] = float(value["spread"]) * 255.0 + 0.5;
   arg[3] = float(value["white"]) * 255.0 + 0.5;
   arg[4] = value["palette"];
+  arg[5] = value["dim"];
 
   if (!radioSend(msg, sizeof(msg))) {
     log(F("couldn't sent ledstrip update"));

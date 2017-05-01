@@ -41,6 +41,7 @@ class Ledstrip {
   uint8_t paletteIndex;
   CRGBPalette16 palette;
   uint8_t white; // how much white is added
+  uint8_t dim; // how much it is dimmed - from 0 (full brightness) to 20 (nearly dark).
   bool sparkles;
   bool reverse; // reverse the whole strip
   bool rainbowReverseColor;
@@ -58,6 +59,7 @@ public:
 private:
   uint8_t applyGamma(uint8_t value) const;
   void loadPalette(palette_t index);
+  void updateBrightness(uint8_t dim);
   void save() const;
 };
 
