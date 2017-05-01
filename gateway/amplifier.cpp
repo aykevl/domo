@@ -110,11 +110,11 @@ void amplifierLoop() {
 #ifndef SERIAL_ENABLED
   counter += rotaryRead();
 #endif
-  if (counter >= 2) {
-    counter -= 2;
+  if (counter >= 4) {
+    counter -= 4;
     amplifierChangeVolume(1);
-  } else if (counter <= -2) {
-    counter += 2;
+  } else if (counter <= -4) {
+    counter += 4;
     amplifierChangeVolume(-1);
   }
 
