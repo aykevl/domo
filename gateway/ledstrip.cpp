@@ -39,7 +39,7 @@ void ledstripSend(uint8_t *arg) {
   values["rainbowRBG"] = (arg[0] & LEDSTRIP_FLAG_RAINBOW_RBG) != 0;
   values["speed"] = arg[1];
   values["spread"] = float(arg[2]) / 255.0;
-  values["white"] = float(arg[3]) / 255.0;
+  values["white"] = arg[3];
   values["palette"] = arg[4];
   values["dim"] = arg[5];
 
@@ -86,7 +86,7 @@ void ledstripReceive(JsonObject &value) {
 
   arg[1] = value["speed"];
   arg[2] = float(value["spread"]) * 255.0 + 0.5;
-  arg[3] = float(value["white"]) * 255.0 + 0.5;
+  arg[3] = value["white"];
   arg[4] = value["palette"];
   arg[5] = value["dim"];
 
