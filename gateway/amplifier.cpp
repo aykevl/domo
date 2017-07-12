@@ -12,11 +12,12 @@
 #include "rotary.h"
 #include "mqtt.h"
 #include "button.h"
+#include "incandescent.h"
 
 const uint8_t AMPLIFIER_EEPROM_ADDRESS = 4; // skip the first 4 bytes
 const unsigned long AMPLIFIER_EEPROM_TIMEOUT = 1000; // wait 1s before writing the volume
 const uint8_t AMPLIFIER_BUTTON_PIN = D1;
-const uint8_t AMPLIFIER_LED_PIN = D0;
+Incandescent amplifierLed(D0);
 const uint8_t AMPLIFIER_SDA = D2;
 const uint8_t AMPLIFIER_SCL = D3;
 
@@ -33,7 +34,7 @@ bool amplifierMuted() {
 
 // private
 void amplifierWriteVolume() {
-  digitalWrite(AMPLIFIER_LED_PIN, !amplifierMuted());
+  amplifierLed.set(!amplifierMuted());
 
   Wire.beginTransmission(AMPLIFIER_ADDRESS);
   if (amplifierMuted()) {
@@ -55,7 +56,7 @@ void amplifierMute(bool muted) {
   } else {
     amplifierVolume = amplifierVolume & ~0x80; // clear bit
   }
-  digitalWrite(AMPLIFIER_LED_PIN, !muted);
+  amplifierLed.set(!muted);
   amplifierWriteVolume();
   amplifierSendState();
 }
@@ -88,7 +89,6 @@ void amplifierSetup() {
   rotarySetup();
 #endif
   Wire.begin(AMPLIFIER_SDA, AMPLIFIER_SCL);
-  pinMode(AMPLIFIER_LED_PIN, OUTPUT);
 
   // Initialize volume
   if (Settings.data.amp_volume != amplifierVolume) {
@@ -99,6 +99,7 @@ void amplifierSetup() {
 
 void amplifierLoop() {
   amplifierButton.loop();
+  amplifierLed.loop();
   static bool buttonWasPressed = false;
   bool buttonPressed = amplifierButton.pressed();
   if (buttonPressed && !buttonWasPressed) {
