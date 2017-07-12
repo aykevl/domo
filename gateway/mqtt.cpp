@@ -34,12 +34,16 @@ void mqttLoop() {
     uint32_t currentMillis = millis();
     if (mqttLastTry == 0 || currentMillis - mqttLastTry > 5000) {
       mqttLastTry = currentMillis;
-      if (mqtt.connect(CLIENT_ID, MQTT_LOG, 1, false, MQTT_MSG_OFFLINE)) {
+      if (mqtt.connect(CLIENT_ID, MQTT_USER, MQTT_PASS, MQTT_LOG, 1, false, MQTT_MSG_OFFLINE)) {
         log(MQTT_MSG_ONLINE);
         if (!mqtt.subscribe(MQTT_PREFIX "a/+", 1)) {
           log(F("failed to subscribe"));
         }
         amplifierSendState();
+      } else {
+#ifdef SERIAL_ENABLED
+        Serial.println("Could not connect to MQTT server");
+#endif
       }
     }
   }
