@@ -17,6 +17,16 @@ void WiFiClass::setup() {
 
 void WiFiClass::loop() {
   bool connected = WiFi.status() == WL_CONNECTED;
+
+#ifdef SERIAL_ENABLED
+  static bool hasPrintedIP = false;
+  if (connected && !hasPrintedIP) {
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+    hasPrintedIP = true;
+  }
+#endif
+
   if (!mdnsStarted && connected) {
     ArduinoOTA.setHostname(CLIENT_ID);
 #ifdef OTA_PASSWORD
