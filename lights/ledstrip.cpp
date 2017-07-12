@@ -5,10 +5,6 @@
 #include "config.h"
 #include "radio.h"
 
-#ifdef __AVR__
-  #include <avr/power.h>
-#endif
-
 uint8_t flameHeat[NUM_LEDS];
 
 #define FLAME_SPEED (1000 / 60) // 60fps, or 16ms per frame

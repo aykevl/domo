@@ -15,7 +15,7 @@ void radioSetup() {
   radio.setChannel(RF24_CHANNEL);
 
   light1.sendState();
-  light2.sendState();
+  //light2.sendState();
   ledstrip.sendState();
 
   radio.startListening();
@@ -24,18 +24,25 @@ void radioSetup() {
 void radioLoop() {
   if (!radio.available()) {
 
-    // Keep requesting the time every 5 seconds when it isn't yet known.
+    // Update time.
+    // Every second when it isn't known, otherwise every hour.
+    static uint16_t lastRequest = 0;
+    uint16_t now = millis() / 1000;
+    uint16_t waitTime = 3600; // 1 hour
     if (Clock.timestamp() == 0) {
-      static uint32_t lastRequest = 0;
-      uint32_t now = millis();
-      if (now - lastRequest > 5000) {
-        lastRequest = now;
-        radioRequestTime();
-      }
+      waitTime = 1; // 1 second
+    }
+    if (uint16_t(now - lastRequest) >= waitTime) {
+      lastRequest = now;
+      radioRequestTime();
     }
 
+    // No message available.
     return;
   }
+
+  // There is a message available.
+
   uint8_t msg[32];
   radio.read(msg, 32);
 
@@ -55,8 +62,8 @@ void radioLoop() {
       case RADIO_MSG_LIGHT:
         if (child == 1) {
           light1.sendState();
-        } else if (child == 2) {
-          light2.sendState();
+        //} else if (child == 2) {
+        //  light2.sendState();
         }
         break;
       case RADIO_MSG_LEDSTRIP:
@@ -68,8 +75,8 @@ void radioLoop() {
       case RADIO_MSG_LIGHT:
         if (child == 1) {
           light1.gotMessage(arg);
-        } else if (child == 2) {
-          light2.gotMessage(arg);
+        //} else if (child == 2) {
+        //  light2.gotMessage(arg);
         }
         break;
 
